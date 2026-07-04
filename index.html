@@ -400,6 +400,7 @@
 
     <div class="card">
       <h2>Outdoor Temperature Scenario</h2>
+      <div class="note" id="liveWeatherNote" style="margin-bottom:10px;">Loading today's actual weather…</div>
       <div class="row">
         <label>Average outdoor temperature: <span class="val" id="tempLabel">45°F</span></label>
         <input type="range" id="tempSlider" min="-10" max="100" value="45" step="1" oninput="updateSim()">
@@ -706,7 +707,7 @@ const APPLIANCES = [
   { id:"laptop", name:"MacBook Air", watts:60, tag:"nice", defaultChecked:false, station:"living" },
   { id:"microwave", name:"Microwave (short bursts)", watts:1000, tag:"nice", defaultChecked:false, station:"kitchen" },
   { id:"blanket", name:"Electric blanket", watts:120, tag:"nice", defaultChecked:false, station:"master" },
-  { id:"windowac", name:"Window AC (upstairs bedroom)", watts:245, tag:"nice", defaultChecked:false, station:"master", note:"Based on 16hrs of real Delta 3 testing (7/3-7/4/2026, 1pm-5am): sustained 530-550W during active afternoon cooling, near-zero (~1W idle) overnight once the 75°F overnight setpoint was satisfied, then a 225W cycle resumed around 4am. Blended average 245W → roughly $1/day if held for 24hrs - well under the $2/day worry. Still missing the 5am-1pm stretch to close a full 24hr loop, so treat as a solid but not final estimate. Good fit for a SHORT outage with a known likely end (e.g. a car knocks out a pole) where sleeping through the heat matters more than rationing - not meant for a multi-day/uncertain outage." },
+  { id:"windowac", name:"Window AC (upstairs bedroom)", watts:171, tag:"nice", defaultChecked:false, station:"master", note:"Based on 23hrs of real Delta 3 testing (7/3 1pm - 7/4 noon, 2026) - essentially a full day/night cycle. Sustained 530-550W during active afternoon cooling (1-7pm), then near-zero (~1W idle) for most of the rest of the day/night once the setpoint was satisfied, with one ~225W cycle around 4am. Blended average 171W → roughly $0.70/day if this pattern held for 24hrs - well under the original $2/day worry. Good fit for a SHORT outage with a known likely end (e.g. a car knocks out a pole) where sleeping through the heat matters more than rationing - not meant for a multi-day/uncertain outage." },
   { id:"pool", name:"Pool pump", watts:120, tag:"avoid", defaultChecked:false, station:"outside" },
   { id:"heater", name:"Portable electric heater", watts:1200, tag:"avoid", defaultChecked:false, station:"basement", note:"Same short-outage exception logic as Window AC above: not a default choice (drains a Delta Pro in ~3hrs), but a brief run to protect pipes during a short/likely-to-resolve winter outage is reasonable. Not for extended/uncertain outages." }
 ];
@@ -716,11 +717,22 @@ function renderRoomSnapshot() {
   const container = document.getElementById('roomSnapshot');
   const asOfEl = document.getElementById('roomSnapshotAsOf');
   if (!container) return;
+
+  // "Outside" tile is live (via loadCurrentWeather), not from the Shortcut, so it always
+  // renders here first as a loading placeholder even if indoor sensors have no data yet.
+  let html = '<div class="room-grid">';
+  html += `
+      <div class="room-tile" id="outsideTile">
+        <div class="room-name"><span class="room-dot" style="background:var(--neutral);"></span>Outside</div>
+        <div class="room-temp">--°F</div>
+        <div class="room-hum">Loading live weather…</div>
+      </div>`;
+
   if (!ROOM_SNAPSHOT.length) {
-    container.innerHTML = '<div class="note">No sensor readings yet.</div>';
+    html += '</div><div class="note" style="margin-top:8px;">No indoor sensor readings yet.</div>';
+    container.innerHTML = html;
     return;
   }
-  let html = '<div class="room-grid">';
   ROOM_SNAPSHOT.forEach(r => {
     html += `
       <div class="room-tile">
@@ -731,7 +743,7 @@ function renderRoomSnapshot() {
   });
   html += '</div>';
   container.innerHTML = html;
-  asOfEl.innerText = 'As of ' + ROOM_SNAPSHOT_AS_OF + ' — refreshed by the daily data update; run the Home Temp Report Shortcut for a newer reading.';
+  asOfEl.innerText = 'Outside is live; indoor rooms as of ' + ROOM_SNAPSHOT_AS_OF + ' — refreshed by the daily data update, or run the Home Temp Report Shortcut for a newer reading.';
 }
 
 // ---------- TABS ----------
@@ -1507,6 +1519,49 @@ if (typeof window !== 'undefined') {
   });
 }
 
+// ---------- LIVE CURRENT WEATHER ----------
+// Mingo Junction, OH 43938 (via Open-Meteo geocoding). Free, keyless, CORS-friendly API -
+// same one used to build the historical weather_log.csv for this project.
+const HOME_COORDS = { lat: 40.32174, lon: -80.6098 };
+
+function loadCurrentWeather() {
+  const note = document.getElementById('liveWeatherNote');
+  const outsideTile = document.getElementById('outsideTile');
+  const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + HOME_COORDS.lat +
+              '&longitude=' + HOME_COORDS.lon +
+              '&current=temperature_2m,relative_humidity_2m&temperature_unit=fahrenheit&timezone=auto';
+
+  fetch(url).then(r => r.json()).then(data => {
+    const cur = data && data.current;
+    if (!cur || typeof cur.temperature_2m !== 'number') throw new Error('bad response');
+    const rawT = Math.round(cur.temperature_2m), rawH = Math.round(cur.relative_humidity_2m);
+    const tempEl = document.getElementById('tempSlider');
+    const humEl = document.getElementById('humiditySlider');
+    const t = Math.max(parseFloat(tempEl.min), Math.min(parseFloat(tempEl.max), rawT));
+    const h = Math.max(parseFloat(humEl.min), Math.min(parseFloat(humEl.max), rawH));
+    tempEl.value = t;
+    humEl.value = h;
+    updateSim();
+    const timeStr = new Date().toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+    if (note) note.innerText = '🌤️ Showing today\'s actual conditions: ' + rawT + '°F, ' + rawH + '% humidity (as of ' + timeStr + ') — move the sliders to explore other scenarios.';
+    if (outsideTile) {
+      const dotColor = rawT >= 76 ? 'var(--bad)' : (rawT >= 72 ? 'var(--warn)' : 'var(--accent)');
+      outsideTile.innerHTML = `
+        <div class="room-name"><span class="room-dot" style="background:${dotColor};"></span>Outside</div>
+        <div class="room-temp">${rawT}°F</div>
+        <div class="room-hum">${rawH}% humidity · live, ${timeStr}</div>`;
+    }
+  }).catch(() => {
+    if (note) note.innerText = 'Couldn\'t reach live weather right now — showing the default 45°F / 72% scenario instead. Move the sliders to explore other conditions.';
+    if (outsideTile) {
+      outsideTile.innerHTML = `
+        <div class="room-name"><span class="room-dot" style="background:var(--neutral);"></span>Outside</div>
+        <div class="room-temp">--°F</div>
+        <div class="room-hum">Live weather unavailable</div>`;
+    }
+  });
+}
+
 // ---------- INIT ----------
 buildBatteryList();
 buildApplianceList();
@@ -1522,6 +1577,7 @@ renderSeasonalCalendar();
 renderRoomSnapshot();
 renderToday();
 if (typeof window !== 'undefined') refreshSliderFills();
+loadCurrentWeather();
 </script>
 </body>
 </html>
