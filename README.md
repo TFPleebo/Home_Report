@@ -9,5 +9,3 @@ a cost scenario simulator, and a battery outage planner.
 Data updates are pushed automatically each morning by a scheduled job.
 This is a personal reference tool; the interesting part is the single-file,
 zero-dependency approach: all data is embedded at publish time.
-
-<!-- build bump 23:41:32 -->
