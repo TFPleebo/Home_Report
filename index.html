@@ -83,10 +83,22 @@
     color: var(--ink);
     padding: 12px 16px calc(118px + env(safe-area-inset-bottom, 0px));
     -webkit-font-smoothing: antialiased;
-    font-size: 15px;
+    font-size: 16px;
   }
   .wrap { max-width: 680px; margin: 0 auto; }
   .app-header { padding: 14px 4px 4px; }
+  .nav-compact {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 90;
+    padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 11px;
+    text-align: center; font-size: 16px; font-weight: 650; color: var(--ink);
+    background: rgba(249,249,249,0.80);
+    -webkit-backdrop-filter: blur(24px) saturate(180%); backdrop-filter: blur(24px) saturate(180%);
+    border-bottom: 0.5px solid var(--hairline);
+    opacity: 0; transform: translateY(-10px); pointer-events: none;
+    transition: opacity 0.22s ease, transform 0.22s ease;
+  }
+  .nav-compact.visible { opacity: 1; transform: none; }
+  @media (prefers-color-scheme: dark) { .nav-compact { background: rgba(18,18,20,0.80); } }
   .eyebrow {
     font-size: 13px; font-weight: 700; color: var(--sub);
     text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 2px;
@@ -145,6 +157,8 @@
     }
   }
   .tab-btn:active { transform: scale(0.93); }
+  .tab-btn.active svg path[d^="M5.2"] { fill: currentColor; fill-opacity: 0.16; }
+  .tab-btn.active svg circle { fill: currentColor; }
 
   /* ---- Cards (iOS grouped inset) ---- */
   .card {
@@ -153,6 +167,13 @@
     animation: rise 0.4s cubic-bezier(0.25, 1, 0.4, 1) both;
   }
   @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  #tab-today .card:nth-of-type(1) { animation-delay: 0.03s; }
+  #tab-today .card:nth-of-type(2) { animation-delay: 0.08s; }
+  #tab-today .card:nth-of-type(3) { animation-delay: 0.13s; }
+  #tab-today .card:nth-of-type(4) { animation-delay: 0.18s; }
+  #tab-today .card:nth-of-type(5) { animation-delay: 0.23s; }
+  @keyframes barrise { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+  svg rect.bar { transform-box: fill-box; transform-origin: bottom; animation: barrise 0.55s cubic-bezier(0.25, 1, 0.4, 1) both; }
   .card h2 {
     font-size: 13px; font-weight: 700; margin: 0 0 12px 0; color: var(--sub);
     text-transform: uppercase; letter-spacing: 0.05em;
@@ -234,12 +255,14 @@
   input[type=checkbox]:checked::after { left: 19px; }
 
   .info-btn {
-    width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--tint);
+    position: relative;
+    width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--tint);
     background: none; color: var(--tint); font-size: 12px; font-weight: 700;
     font-family: Georgia, 'Times New Roman', serif; font-style: italic;
     line-height: 1; cursor: pointer; flex-shrink: 0; padding: 0;
     display: inline-flex; align-items: center; justify-content: center;
   }
+  .info-btn::before { content: ""; position: absolute; inset: -11px; }
   .info-btn:active { transform: scale(0.9); }
   .appliance-note { animation: rise 0.25s ease both; }
   .tag { font-size: 10.5px; padding: 3px 9px; border-radius: 20px; color: #fff; font-weight: 700; letter-spacing: 0.02em; }
@@ -253,7 +276,7 @@
   /* ---- Tinted buttons ---- */
   .preset-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
   .preset-btn {
-    padding: 9px 15px; border-radius: 20px; border: none;
+    padding: 12px 17px; border-radius: 22px; border: none; min-height: 44px;
     background: var(--tint-bg); color: var(--tint); font-size: 14px; font-weight: 600;
     font-family: inherit; cursor: pointer; transition: transform 0.12s ease, filter 0.15s ease;
   }
@@ -271,6 +294,11 @@
   .goal-label { position: absolute; top: -18px; font-size: 10px; color: var(--sub); transform: translateX(-50%); }
   .legend-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 4px; }
 
+  .all-current {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 600; color: var(--sub);
+  }
+  .all-current .dot { width: 7px; height: 7px; border-radius: 50%; }
   .confidence-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 2px 0 12px; }
   .confidence-badge {
     display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600;
@@ -327,6 +355,7 @@
 </style>
 </head>
 <body>
+<div class="nav-compact" id="navCompact">House Power</div>
 <div class="wrap">
   <header class="app-header">
     <div class="eyebrow" id="eyebrowDate"></div>
@@ -1020,26 +1049,30 @@ function renderSettingsTracker() {
 function renderDataStaleness() {
   const row = document.getElementById('dataStalenessRow');
   if (!row) return;
-
   const now = new Date();
   function daysSince(dateStr) {
     const d = new Date(dateStr + 'T00:00:00');
     return Math.floor((now - d) / (1000 * 60 * 60 * 24));
   }
-  function badge(label, dateStr, staleAt, veryStaleAt) {
-    const days = daysSince(dateStr);
-    let color, statusWord;
-    if (days <= staleAt) { color = 'var(--good)'; statusWord = 'current'; }
-    else if (days <= veryStaleAt) { color = 'var(--warn)'; statusWord = 'aging'; }
-    else { color = 'var(--bad)'; statusWord = 'stale'; }
-    const dayLabel = days <= 0 ? 'today' : (days === 1 ? '1 day ago' : days + ' days ago');
-    return `<span class="confidence-badge"><span class="dot" style="background:${color};"></span>${label}: ${dateStr} <span class="sub">(${dayLabel} — ${statusWord})</span></span>`;
+  const sources = [
+    { label: 'Electric', date: LAST_DATA_DATES.aep, staleAt: 4, veryStaleAt: 10 },
+    { label: 'Sensors', date: LAST_DATA_DATES.sensors, staleAt: 3, veryStaleAt: 14 },
+    { label: 'Gas', date: LAST_DATA_DATES.gas, staleAt: 40, veryStaleAt: 60 }
+  ];
+  let pills = '';
+  sources.forEach(s => {
+    const days = daysSince(s.date);
+    if (days <= s.staleAt) return; // current — stay quiet
+    const color = days <= s.veryStaleAt ? 'var(--warn)' : 'var(--bad)';
+    const word = days <= s.veryStaleAt ? 'aging' : 'stale';
+    pills += `<span class="confidence-badge"><span class="dot" style="background:${color};"></span>${s.label}: ${days} days old <span class="sub">(${word})</span></span>`;
+  });
+  if (pills) {
+    row.innerHTML = pills;
+  } else {
+    const worst = Math.max(...sources.map(s => daysSince(s.date)));
+    row.innerHTML = `<span class="all-current"><span class="dot" style="background:var(--good);"></span>All data current</span>`;
   }
-
-  row.innerHTML =
-    badge('Electric (AEP)', LAST_DATA_DATES.aep, 4, 10) +
-    badge('Sensors', LAST_DATA_DATES.sensors, 3, 14) +
-    badge('Gas billing', LAST_DATA_DATES.gas, 40, 60);
 }
 
 // ---------- SEASONAL COST CALENDAR ----------
@@ -1359,6 +1392,20 @@ function renderTodayHero() {
     <div class="note">${kwh.toFixed(1)} kWh electric · avg ${t.toFixed(0)}°F outside, ${h.toFixed(0)}% humidity · plus ~$${gasEst.toFixed(2)} estimated gas</div>
     <div class="delta-line" style="color:${color};">${delta >= 0 ? '▲' : '▼'} ${verdict}</div>
   `;
+  // count-up animation on the hero number
+  if (typeof requestAnimationFrame === 'function' && typeof matchMedia === 'function'
+      && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const numEl = el.querySelector('.big-number');
+    if (numEl) {
+      const target = actual, t0 = performance.now(), dur = 650;
+      (function tick(t) {
+        const p = Math.min(1, (t - t0) / dur);
+        const eased = 1 - Math.pow(1 - p, 3);
+        numEl.textContent = '$' + (target * eased).toFixed(2);
+        if (p < 1) requestAnimationFrame(tick);
+      })(t0);
+    }
+  }
 }
 
 function renderAlertStrip() {
@@ -1403,7 +1450,7 @@ function renderRecentChart() {
   rows.forEach((r, i) => {
     const cx = padL + slot * i + slot / 2;
     const bx = cx - barW / 2;
-    out += `<rect x="${bx.toFixed(1)}" y="${y(r.actual).toFixed(1)}" width="${barW.toFixed(1)}" height="${(H - padB - y(r.actual)).toFixed(1)}" rx="3" style="fill:var(--chart-soft)"/>`;
+    out += `<rect class="bar" x="${bx.toFixed(1)}" y="${y(r.actual).toFixed(1)}" width="${barW.toFixed(1)}" height="${(H - padB - y(r.actual)).toFixed(1)}" rx="3" style="fill:var(--chart-soft); animation-delay:${(i * 35)}ms"/>`;
     out += `<line x1="${(cx - barW / 2 - 3).toFixed(1)}" y1="${y(r.model).toFixed(1)}" x2="${(cx + barW / 2 + 3).toFixed(1)}" y2="${y(r.model).toFixed(1)}" style="stroke:var(--chart-strong)" stroke-width="2"/>`;
     out += `<text x="${cx.toFixed(1)}" y="${H - padB + 14}" font-size="9" style="fill:var(--chart-text)" text-anchor="middle">${r.date.slice(5).replace('-', '/')}</text>`;
   });
@@ -1577,7 +1624,13 @@ renderDataStaleness();
 renderSeasonalCalendar();
 renderRoomSnapshot();
 renderToday();
-if (typeof window !== 'undefined') refreshSliderFills();
+if (typeof window !== 'undefined') {
+  refreshSliderFills();
+  window.addEventListener('scroll', () => {
+    const nc = document.getElementById('navCompact');
+    if (nc) nc.classList.toggle('visible', window.scrollY > 64);
+  }, { passive: true });
+}
 loadCurrentWeather();
 </script>
 </body>
