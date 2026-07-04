@@ -529,9 +529,9 @@
     <div class="card">
       <h2>Quick presets</h2>
       <div class="preset-row">
-        <button class="preset-btn" onclick="applyOutagePreset('short')">🔋 Short Outage — Essentials Only</button>
-        <button class="preset-btn" onclick="applyOutagePreset('extended')">☀️ Extended Outage — Day 2 + Solar</button>
-        <button class="preset-btn" onclick="applyOutagePreset('storm')">⛈️ Storm / Flicker Event</button>
+        <button class="preset-btn" onclick="applyOutagePreset('short')">🔋 Short Outage — Fridge Only (Delta 3)</button>
+        <button class="preset-btn" onclick="applyOutagePreset('extended')">🔌 Extended Outage — 24hr Room Plan</button>
+        <button class="preset-btn" onclick="applyOutagePreset('storm')">⛈️ Storm — Maximize + Solar</button>
       </div>
     </div>
 
@@ -696,6 +696,8 @@ const APPLIANCES = [
   { id:"lights", name:"Low-watt lights (LED)", watts:20, tag:"essential", defaultChecked:true, station:"living" },
   { id:"fan", name:"Fan(s)", watts:35, tag:"essential", defaultChecked:true, station:"living" },
   { id:"phones", name:"Phone/tablet charging", watts:20, tag:"essential", defaultChecked:true, station:"living" },
+  { id:"phones-riley", name:"Phone/tablet charging — Riley's Room", watts:20, tag:"nice", defaultChecked:false, station:"riley" },
+  { id:"phones-kids", name:"Phone/tablet charging — Sophia & Teagan's Room", watts:20, tag:"nice", defaultChecked:false, station:"kids" },
   { id:"cameras", name:"Outdoor security cameras (USB)", watts:8, tag:"essential", defaultChecked:false, station:"outside" },
   { id:"minifridge", name:"Mini fridge", watts:60, tag:"nice", defaultChecked:false, station:"living" },
   { id:"tv", name:"TV + Apple TV", watts:120, tag:"nice", defaultChecked:false, station:"living" },
@@ -1106,20 +1108,52 @@ function setChecked(id, val) {
   if (el) el.checked = val;
 }
 
+function setStation(id, stationId) {
+  const el = document.getElementById('station-' + id);
+  if (el) el.value = stationId;
+}
+
 function applyOutagePreset(kind) {
-  // reset all first
-  BATTERIES.forEach(b => setChecked(b.id, false));
-  APPLIANCES.forEach(a => setChecked(a.id, false));
+  // reset all first - checked state AND station, so a previous preset's room
+  // moves (e.g. Short's Delta 3 -> Kitchen) don't leak into the next one
+  BATTERIES.forEach(b => { setChecked(b.id, false); setStation(b.id, b.station); });
+  APPLIANCES.forEach(a => { setChecked(a.id, false); setStation(a.id, a.station); });
+  const solarChk = document.getElementById('chk-solar');
+  if (solarChk) solarChk.checked = false;
+  setStation('solar', SOLAR.station);
 
   if (kind === 'short') {
-    setChecked('deltapro', true); setChecked('delta3', true);
-    ['mainfridge','router','lights','fan','phones'].forEach(id => setChecked(id, true));
-  } else if (kind === 'extended') {
-    setChecked('deltapro', true); setChecked('delta3', true); setChecked('river2', true); setChecked('ego25', true); setChecked('ego50', true);
-    ['mainfridge','freezer','router','lights','fan','phones','minifridge','tv'].forEach(id => setChecked(id, true));
-  } else if (kind === 'storm') {
-    setChecked('anker', true); setChecked('ego25', true);
-    ['router','lights','phones','cameras'].forEach(id => setChecked(id, true));
+    // Fridge only - the Delta 3 is light enough to carry to the kitchen for this,
+    // no need to move the heavy Delta Pro for a short, likely-to-resolve outage.
+    setChecked('delta3', true); setStation('delta3', 'kitchen');
+    setChecked('mainfridge', true); // already stationed in Kitchen
+
+  } else if (kind === 'extended' || kind === 'storm') {
+    // Real ceiling on this system is ~24 hours. Fridge is the vital load, kept on
+    // the Delta Pro alone (no freezer) to stretch it as long as possible. Everything
+    // else is a per-room deployment of the smaller batteries.
+    setChecked('deltapro', true); // Kitchen (default)
+    setChecked('mainfridge', true);
+
+    setChecked('river2', true); setStation('river2', 'riley');
+    setChecked('fan', true); setStation('fan', 'riley');
+    setChecked('phones-riley', true); // already stationed in Riley's Room
+
+    setChecked('anker', true); setStation('anker', 'kids');
+    setChecked('phones-kids', true); // already stationed in Sophia & Teagan's Room
+
+    // Delta 3 - Living Room or Master Bedroom, whichever it actually ends up in that
+    // day. Defaults to Living Room; flip its station dropdown if it's moved upstairs.
+    setChecked('delta3', true);
+    setChecked('lights', true);
+    setChecked('phones', true);
+    setChecked('tv', true);
+
+    if (kind === 'storm') {
+      // Unknown duration - maximize what's deployed and add solar to the station
+      // that benefits most (the fridge, since it's the priority load).
+      if (solarChk) { solarChk.checked = true; setStation('solar', 'kitchen'); }
+    }
   }
   updateOutage();
 }
