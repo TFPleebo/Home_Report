@@ -754,6 +754,7 @@ function showTab(tab) {
     if (el) el.style.display = t === tab ? 'block' : 'none';
   });
   document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', TAB_IDS[i] === tab));
+  window.scrollTo(0, 0);
 }
 
 // ---------- SIMULATOR LOGIC ----------
