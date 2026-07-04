@@ -81,7 +81,7 @@
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", system-ui, "Segoe UI", Roboto, sans-serif;
     background: var(--bg);
     color: var(--ink);
-    padding: 12px 16px calc(96px + env(safe-area-inset-bottom, 0px));
+    padding: 12px 16px calc(118px + env(safe-area-inset-bottom, 0px));
     -webkit-font-smoothing: antialiased;
     font-size: 15px;
   }
@@ -98,35 +98,53 @@
   }
   .subtitle { display: none; }
 
-  /* ---- Bottom tab bar ---- */
+  /* ---- Bottom tab bar (liquid glass) ---- */
   .tabs {
-    position: fixed; left: 0; right: 0; bottom: 0; z-index: 100;
+    position: fixed; left: 50%; transform: translateX(-50%);
+    bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+    width: min(430px, calc(100% - 28px));
+    z-index: 100;
     display: flex; justify-content: space-around; align-items: stretch;
-    padding: 6px 12px calc(10px + env(safe-area-inset-bottom, 0px));
-    background: rgba(249,249,249,0.82);
-    -webkit-backdrop-filter: saturate(180%) blur(22px); backdrop-filter: saturate(180%) blur(22px);
-    border-top: 0.5px solid var(--hairline);
+    padding: 7px; border-radius: 34px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.52), rgba(255,255,255,0.28));
+    -webkit-backdrop-filter: blur(30px) saturate(200%); backdrop-filter: blur(30px) saturate(200%);
+    border: 0.5px solid rgba(255,255,255,0.62);
+    box-shadow:
+      0 16px 44px -10px rgba(0,0,0,0.30),
+      inset 0 1px 0 rgba(255,255,255,0.72),
+      inset 0 -1px 1px rgba(0,0,0,0.06);
   }
   @media (prefers-color-scheme: dark) {
-    .tabs { background: rgba(22,22,24,0.82); }
+    .tabs {
+      background: linear-gradient(180deg, rgba(46,46,50,0.58), rgba(24,24,28,0.46));
+      border-color: rgba(255,255,255,0.15);
+      box-shadow:
+        0 16px 44px -10px rgba(0,0,0,0.62),
+        inset 0 1px 0 rgba(255,255,255,0.15),
+        inset 0 -1px 1px rgba(0,0,0,0.32);
+    }
   }
   .tab-btn {
     display: flex; flex-direction: column; align-items: center; gap: 3px;
-    flex: 1; max-width: 168px; padding: 4px 6px; border: none; background: none;
-    color: var(--sub); font-family: inherit; font-size: 10.5px; font-weight: 600;
+    flex: 1; padding: 7px 6px; border: none; background: none;
+    color: rgba(60,60,67,0.72); font-family: inherit; font-size: 10.5px; font-weight: 600;
     letter-spacing: 0.01em; cursor: pointer; transition: color 0.18s ease, transform 0.12s ease;
-    border-radius: 14px;
+    border-radius: 26px;
   }
-  .tab-btn svg { width: 26px; height: 26px; display: block; }
-  .tab-btn.active { color: var(--tint); }
-  .tab-btn:active { transform: scale(0.94); }
-  @media (min-width: 800px) {
-    .tabs {
-      left: 50%; right: auto; bottom: 18px; transform: translateX(-50%);
-      width: 380px; border-radius: 28px; border: 0.5px solid var(--hairline);
-      padding: 8px 10px; box-shadow: 0 12px 40px -8px rgba(0,0,0,0.28);
+  @media (prefers-color-scheme: dark) { .tab-btn { color: rgba(235,235,245,0.62); } }
+  .tab-btn svg { width: 25px; height: 25px; display: block; }
+  .tab-btn.active {
+    color: var(--tint);
+    background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.60));
+    box-shadow: 0 3px 10px -2px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.9);
+  }
+  @media (prefers-color-scheme: dark) {
+    .tab-btn.active {
+      background: linear-gradient(180deg, rgba(255,255,255,0.17), rgba(255,255,255,0.08));
+      box-shadow: 0 3px 12px -2px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.22);
     }
   }
+  .tab-btn:active { transform: scale(0.93); }
 
   /* ---- Cards (iOS grouped inset) ---- */
   .card {
@@ -215,6 +233,15 @@
   input[type=checkbox]:checked { background: var(--good); }
   input[type=checkbox]:checked::after { left: 19px; }
 
+  .info-btn {
+    width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--tint);
+    background: none; color: var(--tint); font-size: 12px; font-weight: 700;
+    font-family: Georgia, 'Times New Roman', serif; font-style: italic;
+    line-height: 1; cursor: pointer; flex-shrink: 0; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .info-btn:active { transform: scale(0.9); }
+  .appliance-note { animation: rise 0.25s ease both; }
   .tag { font-size: 10.5px; padding: 3px 9px; border-radius: 20px; color: #fff; font-weight: 700; letter-spacing: 0.02em; }
   .tag.essential { background: var(--good); }
   .tag.nice { background: var(--warn); }
@@ -352,7 +379,7 @@
     </div>
 
     <div class="card">
-      <h2>Active Test</h2>
+      <h2 id="testCardTitle">Active Test</h2>
       <div id="testStatus"></div>
       <div class="note" style="margin-top:8px;">Full period-by-period history lives in the Simulator tab → Settings &amp; Test Tracker.</div>
     </div>
@@ -616,7 +643,7 @@ function getGasConfidence(tempF) {
 // ==HP_DATA_START==
 // Everything between these markers is regenerated by update_dashboard_data.py
 // from the CSV files in this folder. Do not hand-edit; run the script instead.
-// Last refreshed: 2026-07-04 11:29
+// Last refreshed: 2026-07-04 12:05
 
 // Real observed-day counts per 5°F bin, from home_climate_log.csv (457 full metered days).
 const ELECTRIC_DAY_COUNTS = [0, 0, 2, 5, 8, 8, 12, 16, 23, 26, 32, 36, 30, 43, 51, 63, 54, 35, 13, 0, 0, 0];
@@ -1059,12 +1086,13 @@ function buildApplianceList() {
         <input type="checkbox" id="chk-${a.id}" ${a.defaultChecked ? 'checked' : ''} onchange="updateOutage()">
         <span>${a.name}</span>
         <span class="tag ${a.tag}">${a.tag}</span>
+        ${a.note ? `<button class="info-btn" onclick="toggleNote('${a.id}')" aria-label="More info">i</button>` : ''}
       </div>
       <span class="watts">${a.watts} W</span>
       <div style="flex-basis:100%; margin-top:4px;">
         <label style="font-size:0.78rem; color:var(--sub);">Located at: <select id="station-${a.id}" onchange="updateOutage()">${stationOptionsHtml(a.station)}</select></label>
       </div>
-      ${a.note ? `<div class="note" style="flex-basis:100%;">${a.note}</div>` : ''}
+      ${a.note ? `<div class="note appliance-note" id="note-${a.id}" style="flex-basis:100%; display:none;">${a.note}</div>` : ''}
     `;
     container.appendChild(div);
   });
@@ -1245,6 +1273,11 @@ function updateOutage() {
   suggestionBox.innerHTML = suggestionHtml || '<div class="note">No station currently has both a battery and a load selected.</div>';
 }
 
+function toggleNote(id) {
+  const el = document.getElementById('note-' + id);
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
 // ---------- TODAY VIEW ----------
 function fmtDateNice(dateStr) {
   const d = new Date(dateStr + 'T12:00:00');
@@ -1355,24 +1388,58 @@ function renderMonthSoFar() {
 function renderTestStatus() {
   const el = document.getElementById('testStatus');
   if (!el) return;
+  const titleEl = document.getElementById('testCardTitle');
   const log = [...SETTINGS_LOG].sort((a, b) => (a[0] < b[0] ? -1 : 1));
   const cur = log[log.length - 1];
   const startDate = cur[0], notes = cur[2];
   const days = DAILY_RECORDS.filter(r => r[0] >= startDate);
   const n = days.length;
-  let body;
-  if (n === 0) {
-    body = '<div class="note">No metered days under these settings yet — check back after the next AEP export.</div>';
-  } else {
-    const actualAvg = days.reduce((s, r) => s + actualElecCost(r[3]), 0) / n;
-    const modelAvg = days.reduce((s, r) => s + electricDaily(r[1], r[2]).cost, 0) / n;
-    const delta = actualAvg - modelAvg;
-    const conf = n < 5 ? 'low confidence' : (n < 15 ? 'moderate confidence' : 'decent confidence');
-    const color = delta <= 0 ? 'var(--good)' : 'var(--bad)';
-    const word = delta <= 0 ? 'saving' : 'costing';
-    body = `<div class="delta-line" style="color:${color}; margin-top:0;">${delta <= 0 ? '▼' : '▲'} Apparently ${word} $${Math.abs(delta).toFixed(2)}/day vs. the model <span style="font-weight:400; color:var(--sub);">(${n} real day${n === 1 ? '' : 's'} — ${conf})</span></div>`;
+  const ageDays = Math.floor((new Date() - new Date(startDate + 'T00:00:00')) / 86400000);
+
+  // Fresh settings change -> show test progress
+  if (n < 15 && ageDays < 45) {
+    if (titleEl) titleEl.innerText = 'Active Test';
+    let body;
+    if (n === 0) {
+      body = '<div class="note">No metered days under these settings yet — check back after the next AEP export.</div>';
+    } else {
+      const actualAvg = days.reduce((s, r) => s + actualElecCost(r[3]), 0) / n;
+      const modelAvg = days.reduce((s, r) => s + electricDaily(r[1], r[2]).cost, 0) / n;
+      const delta = actualAvg - modelAvg;
+      const color = delta <= 0 ? 'var(--good)' : 'var(--bad)';
+      const word = delta <= 0 ? 'saving' : 'costing';
+      body = `<div class="delta-line" style="color:${color}; margin-top:0;">${delta <= 0 ? '▼' : '▲'} Early read: ${word} $${Math.abs(delta).toFixed(2)}/day vs. the model</div>
+        <div class="note">${n} of ~15 real days collected — ${n < 5 ? 'low' : 'moderate'} confidence, the number will settle as days accumulate.</div>`;
+    }
+    el.innerHTML = `<div class="note" style="margin-top:0; margin-bottom:6px;"><strong>Since ${startDate}:</strong> ${notes}</div>` + body;
+    return;
   }
-  el.innerHTML = `<div class="note" style="margin-top:0; margin-bottom:6px;"><strong>Since ${startDate}:</strong> ${notes}</div>` + body;
+
+  // Nothing fresh to test -> compare this month against the same month last year
+  if (titleEl) titleEl.innerText = 'Vs. Last Year';
+  if (!DAILY_RECORDS.length) { el.innerHTML = '<div class="note">Not enough data yet.</div>'; return; }
+  const latest = DAILY_RECORDS[DAILY_RECORDS.length - 1][0];
+  const ym = latest.slice(0, 7);
+  const year = parseInt(ym.slice(0, 4), 10), month = ym.slice(5);
+  const monthName = ['January','February','March','April','May','June','July','August','September','October','November','December'][parseInt(month, 10) - 1];
+  const thisM = DAILY_RECORDS.filter(r => r[0].slice(0, 7) === ym);
+  const lastM = DAILY_RECORDS.filter(r => r[0].slice(0, 7) === (year - 1) + '-' + month);
+  if (!lastM.length || !thisM.length) {
+    el.innerHTML = `<div class="note">No ${monthName} ${year - 1} data to compare against yet.</div>`;
+    return;
+  }
+  const avg = a => a.reduce((s, r) => s + actualElecCost(r[3]), 0) / a.length;
+  const tAvg = a => a.reduce((s, r) => s + r[1], 0) / a.length;
+  const nowAvg = avg(thisM), prevAvg = avg(lastM);
+  const d = nowAvg - prevAvg;
+  const color = d <= 0 ? 'var(--good)' : 'var(--bad)';
+  el.innerHTML = `
+    <div class="stat-grid">
+      <div class="stat-box"><div class="stat-label">${monthName} ${year}</div><div class="stat-value">$${nowAvg.toFixed(2)}</div><div class="stat-sub">per day · ${thisM.length} day${thisM.length === 1 ? '' : 's'} · avg ${tAvg(thisM).toFixed(0)}°F</div></div>
+      <div class="stat-box"><div class="stat-label">${monthName} ${year - 1}</div><div class="stat-value">$${prevAvg.toFixed(2)}</div><div class="stat-sub">per day · ${lastM.length} days · avg ${tAvg(lastM).toFixed(0)}°F</div></div>
+    </div>
+    <div class="delta-line" style="color:${color};">${d <= 0 ? '▼' : '▲'} ${d <= 0 ? '$' + Math.abs(d).toFixed(2) + '/day cheaper' : '$' + d.toFixed(2) + '/day more expensive'} than last ${monthName}</div>
+    <div class="note">Raw comparison — weather differs year to year (note the avg temps), so read gaps with that in mind.</div>`;
 }
 
 function renderToday() {
