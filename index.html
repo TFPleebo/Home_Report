@@ -173,7 +173,7 @@
   #tab-today .card:nth-of-type(4) { animation-delay: 0.18s; }
   #tab-today .card:nth-of-type(5) { animation-delay: 0.23s; }
   @keyframes barrise { from { transform: scaleY(0); } to { transform: scaleY(1); } }
-  svg rect.bar { transform-box: fill-box; transform-origin: bottom; animation: barrise 0.55s cubic-bezier(0.25, 1, 0.4, 1) both; }
+  svg rect.bar.animate { transform-box: fill-box; transform-origin: bottom; animation: barrise 0.55s cubic-bezier(0.25, 1, 0.4, 1) both; }
   .card h2 {
     font-size: 13px; font-weight: 700; margin: 0 0 12px 0; color: var(--sub);
     text-transform: uppercase; letter-spacing: 0.05em;
@@ -327,6 +327,22 @@
   }
   .room-tile .room-hum { font-size: 12px; color: var(--sub); margin-top: 1px; }
 
+  .chart-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .chart-range { font-size: 12px; font-weight: 650; color: var(--sub); letter-spacing: 0.02em; }
+  .chev {
+    position: relative; width: 32px; height: 32px; border-radius: 50%; border: none;
+    background: var(--tint-bg); color: var(--tint); font-size: 20px; font-weight: 700;
+    line-height: 1; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+    padding: 0 0 2px 0; transition: opacity 0.15s ease, transform 0.12s ease;
+  }
+  .chev::before { content: ""; position: absolute; inset: -6px; }
+  .chev:active { transform: scale(0.9); }
+  .chev:disabled { opacity: 0.3; cursor: default; }
+  .day-detail {
+    background: var(--tile-bg); border-radius: 14px; padding: 11px 13px; margin-top: 8px;
+    font-size: 14px; animation: rise 0.25s ease both;
+  }
+  svg rect.tapzone { cursor: pointer; }
   .hero-row { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
   .hero-date { font-size: 15px; color: var(--sub); font-weight: 600; }
   .delta-line { font-size: 15px; font-weight: 650; margin-top: 10px; }
@@ -397,9 +413,15 @@
     </div>
 
     <div class="card">
-      <h2>Last 14 Metered Days</h2>
+      <h2>Metered Days</h2>
+      <div class="chart-nav">
+        <button class="chev" id="chevOlder" onclick="shiftRecent(1)" aria-label="Older days">&#8249;</button>
+        <span class="chart-range" id="recentRange"></span>
+        <button class="chev" id="chevNewer" onclick="shiftRecent(-1)" aria-label="Newer days">&#8250;</button>
+      </div>
       <svg id="recentChart" viewBox="0 0 700 240" style="width:100%; height:auto;"></svg>
-      <div class="note">Bars = actual electric cost per day. Ticks = what the model expected for that day's actual weather. A big gap between bar and tick means something unusual happened that day.</div>
+      <div id="recentDetail"></div>
+      <div class="note">Bars = actual cost per day; ticks = what the model expected for that day's weather. Tap a bar for details. Swipe the chart (or use the arrows) to page back through history.</div>
     </div>
 
     <div class="card">
@@ -1425,10 +1447,41 @@ function renderAlertStrip() {
   el.innerHTML = alerts.map(a => '<div class="warning" style="margin-top:0; margin-bottom:8px;">' + a + '</div>').join('');
 }
 
+let recentOffset = 0, selectedRecentIdx = null, recentAnimate = true;
+
+function shiftRecent(dir) {
+  const N = 14, maxOff = Math.max(0, DAILY_RECORDS.length - N);
+  const next = Math.min(maxOff, Math.max(0, recentOffset + dir * N));
+  if (next === recentOffset) return;
+  recentOffset = next;
+  selectedRecentIdx = null;
+  recentAnimate = true;
+  renderRecentChart();
+}
+
+function selectRecentDay(i) {
+  selectedRecentIdx = (selectedRecentIdx === i) ? null : i;
+  recentAnimate = false;
+  renderRecentChart();
+}
+
 function renderRecentChart() {
   const svg = document.getElementById('recentChart');
   if (!svg || !DAILY_RECORDS.length) return;
-  const recs = DAILY_RECORDS.slice(-14);
+  const N = 14, total = DAILY_RECORDS.length;
+  const maxOff = Math.max(0, total - N);
+  if (recentOffset > maxOff) recentOffset = maxOff;
+  const end = total - recentOffset;
+  const startI = Math.max(0, end - N);
+  const recs = DAILY_RECORDS.slice(startI, end);
+
+  const fmtShort = ds => new Date(ds + 'T12:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  const rangeEl = document.getElementById('recentRange');
+  if (rangeEl) rangeEl.innerText = fmtShort(recs[0][0]) + ' – ' + fmtShort(recs[recs.length - 1][0]);
+  const older = document.getElementById('chevOlder'), newer = document.getElementById('chevNewer');
+  if (older) older.disabled = recentOffset >= maxOff;
+  if (newer) newer.disabled = recentOffset === 0;
+
   const W = 700, H = 240, padL = 40, padR = 10, padT = 16, padB = 30;
   let maxC = 0;
   const rows = recs.map(r => {
@@ -1436,13 +1489,14 @@ function renderRecentChart() {
     const model = electricDaily(r[1], r[2]).cost;
     if (actual > maxC) maxC = actual;
     if (model > maxC) maxC = model;
-    return { date: r[0], actual, model };
+    return { rec: r, actual, model };
   });
   maxC = Math.ceil(maxC / 2) * 2;
   const n = rows.length;
   const slot = (W - padL - padR) / n;
   const barW = Math.min(34, slot * 0.6);
   const y = c => H - padB - (c / maxC) * (H - padT - padB);
+  const anim = recentAnimate ? ' animate' : '';
   let out = `
     <line x1="${padL}" y1="${H - padB}" x2="${W - padR}" y2="${H - padB}" style="stroke:var(--chart-grid)"/>
     <text x="${padL - 6}" y="${padT + 4}" font-size="10" style="fill:var(--chart-text)" text-anchor="end">$${maxC}</text>
@@ -1450,11 +1504,31 @@ function renderRecentChart() {
   rows.forEach((r, i) => {
     const cx = padL + slot * i + slot / 2;
     const bx = cx - barW / 2;
-    out += `<rect class="bar" x="${bx.toFixed(1)}" y="${y(r.actual).toFixed(1)}" width="${barW.toFixed(1)}" height="${(H - padB - y(r.actual)).toFixed(1)}" rx="3" style="fill:var(--chart-soft); animation-delay:${(i * 35)}ms"/>`;
-    out += `<line x1="${(cx - barW / 2 - 3).toFixed(1)}" y1="${y(r.model).toFixed(1)}" x2="${(cx + barW / 2 + 3).toFixed(1)}" y2="${y(r.model).toFixed(1)}" style="stroke:var(--chart-strong)" stroke-width="2"/>`;
-    out += `<text x="${cx.toFixed(1)}" y="${H - padB + 14}" font-size="9" style="fill:var(--chart-text)" text-anchor="middle">${r.date.slice(5).replace('-', '/')}</text>`;
+    const sel = selectedRecentIdx === i;
+    const dim = selectedRecentIdx !== null && !sel;
+    const fill = sel ? 'var(--chart-line)' : 'var(--chart-soft)';
+    out += `<rect class="bar${anim}" x="${bx.toFixed(1)}" y="${y(r.actual).toFixed(1)}" width="${barW.toFixed(1)}" height="${(H - padB - y(r.actual)).toFixed(1)}" rx="3" style="fill:${fill};${dim ? 'opacity:0.4;' : ''} animation-delay:${(i * 35)}ms"/>`;
+    out += `<line x1="${(cx - barW / 2 - 3).toFixed(1)}" y1="${y(r.model).toFixed(1)}" x2="${(cx + barW / 2 + 3).toFixed(1)}" y2="${y(r.model).toFixed(1)}" style="stroke:var(--chart-strong);${dim ? 'opacity:0.4;' : ''}" stroke-width="2"/>`;
+    out += `<text x="${cx.toFixed(1)}" y="${H - padB + 14}" font-size="9" style="fill:var(--chart-text)" text-anchor="middle">${r.rec[0].slice(5).replace('-', '/')}</text>`;
+    out += `<rect class="tapzone" x="${(padL + slot * i).toFixed(1)}" y="${padT}" width="${slot.toFixed(1)}" height="${(H - padT - padB).toFixed(1)}" fill="transparent" onclick="selectRecentDay(${i})"/>`;
   });
   svg.innerHTML = out;
+  recentAnimate = false;
+
+  const detail = document.getElementById('recentDetail');
+  if (detail) {
+    if (selectedRecentIdx !== null && rows[selectedRecentIdx]) {
+      const r = rows[selectedRecentIdx], rec = r.rec;
+      const delta = r.actual - r.model;
+      const dc = delta <= 0 ? 'var(--good)' : 'var(--bad)';
+      detail.innerHTML = `<div class="day-detail">
+        <strong>${fmtDateNice(rec[0])}</strong> — $${r.actual.toFixed(2)} actual · ${rec[3].toFixed(1)} kWh
+        <div class="note" style="margin-top:3px;">Model expected $${r.model.toFixed(2)} for ${rec[1].toFixed(0)}°F / ${rec[2].toFixed(0)}% humidity → <span style="color:${dc}; font-weight:650;">${delta >= 0 ? '+' : '−'}$${Math.abs(delta).toFixed(2)}</span> vs. expected</div>
+      </div>`;
+    } else {
+      detail.innerHTML = '';
+    }
+  }
 }
 
 function renderMonthSoFar() {
@@ -1626,6 +1700,16 @@ renderRoomSnapshot();
 renderToday();
 if (typeof window !== 'undefined') {
   refreshSliderFills();
+  const rsvg = document.getElementById('recentChart');
+  if (rsvg && rsvg.addEventListener) {
+    let tx = null;
+    rsvg.addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, { passive: true });
+    rsvg.addEventListener('touchend', e => {
+      if (tx === null) return;
+      const dx = e.changedTouches[0].clientX - tx; tx = null;
+      if (dx > 44) shiftRecent(1); else if (dx < -44) shiftRecent(-1);
+    }, { passive: true });
+  }
   window.addEventListener('scroll', () => {
     const nc = document.getElementById('navCompact');
     if (nc) nc.classList.toggle('visible', window.scrollY > 64);
