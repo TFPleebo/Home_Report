@@ -185,6 +185,11 @@
     font-size: 13px; font-weight: 700; margin: 0 0 12px 0; color: var(--sub);
     text-transform: uppercase; letter-spacing: 0.05em;
   }
+  .card-title-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    margin-bottom: 12px;
+  }
+  .card-title-row h2 { margin-bottom: 0; }
   .card-hero .big-number {
     font-family: ui-rounded, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
     font-size: 52px; font-weight: 800; letter-spacing: -0.5px; line-height: 1;
@@ -213,9 +218,23 @@
     background: var(--tile-bg); color: var(--ink); font-family: inherit; font-size: 15px;
     font-variant-numeric: tabular-nums;
   }
+  input[type=text] {
+    width: 100%; padding: 8px 10px; border-radius: 10px; border: none;
+    background: var(--tile-bg); color: var(--ink); font-family: inherit; font-size: 15px;
+    box-sizing: border-box;
+  }
   select {
     border-radius: 10px; border: none; background: var(--tile-bg);
     color: var(--ink); padding: 6px 8px; font-family: inherit; font-size: 14px;
+  }
+  .add-item-form {
+    margin-top: 10px; padding: 12px; border-radius: 14px;
+    border: 1px dashed var(--chart-grid);
+  }
+  .add-item-form select { width: 100%; box-sizing: border-box; }
+  .remove-item-btn {
+    background: none; border: none; color: var(--bad); font-size: 18px; line-height: 1;
+    padding: 0 4px; cursor: pointer;
   }
 
   .big-number {
@@ -417,7 +436,8 @@
     <div id="alertStrip"></div>
 
     <div class="card card-hero">
-      <h2>Latest Metered Day</h2>
+      <div class="card-title-row"><h2>Latest Metered Day</h2><span class="info-btn" onclick="toggleNote('priceestimate')" title="More info">i</span></div>
+      <div class="note" id="note-priceestimate" style="display:none; margin-bottom:8px;">Today's estimate uses the average of today's forecast high/low fed into the same cost model used everywhere else on this page. Monthly estimate adds up actual metered days so far this month, plus modeled cost for the rest of the month — using the forecast for days it covers (up to ~16 days out) and this month's historical average temperature beyond that. Both are estimates, not bills — your real AEP/gas billing will differ.</div>
       <div id="todayHero"></div>
       <div class="stat-grid" style="margin-top:14px;">
         <div class="stat-box">
@@ -431,20 +451,18 @@
           <div class="stat-sub" id="monthEstimateSub">Loading forecast…</div>
         </div>
       </div>
-      <span class="info-btn" onclick="toggleNote('priceestimate')" title="More info">i</span>
-      <div class="note" id="note-priceestimate" style="display:none; margin-top:6px;">Today's estimate uses the average of today's forecast high/low fed into the same cost model used everywhere else on this page. Monthly estimate adds up actual metered days so far this month, plus modeled cost for the rest of the month — using the forecast for days it covers (up to ~16 days out) and this month's historical average temperature beyond that. Both are estimates, not bills — your real AEP/gas billing will differ.</div>
     </div>
 
     <div class="card">
-      <h2>Right Now In Your House</h2>
-      <span class="info-btn" onclick="toggleNote('roomsnapshot')" title="More info">i</span>
+      <div class="card-title-row"><h2>Right Now In Your House</h2><span class="info-btn" onclick="toggleNote('roomsnapshot')" title="More info">i</span></div>
       <div class="note" id="note-roomsnapshot" style="margin-bottom:8px; display:none;">Last real reading from each sensor, straight from your Shortcut — not a prediction.</div>
       <div id="roomSnapshot"></div>
       <div class="note" id="roomSnapshotAsOf" style="margin-top:8px;"></div>
     </div>
 
     <div class="card">
-      <h2>Metered Days</h2>
+      <div class="card-title-row"><h2>Metered Days</h2><span class="info-btn" onclick="toggleNote('metereddays')" title="More info">i</span></div>
+      <div class="note" id="note-metereddays" style="margin-bottom:8px; display:none;">Bars = actual cost per day. The tick and shaded band = what the model expected for that day's weather, ± its typical miss — days landing inside the band are normal; days far outside are worth a look. Tap a bar for details; swipe or use the arrows to page through history.</div>
       <div class="chart-nav">
         <button class="chev" id="chevOlder" onclick="shiftRecent(1)" aria-label="Older days">&#8249;</button>
         <span class="chart-range" id="recentRange"></span>
@@ -452,8 +470,6 @@
       </div>
       <svg id="recentChart" viewBox="0 0 700 240" style="width:100%; height:auto;"></svg>
       <div id="recentDetail"></div>
-      <span class="info-btn" onclick="toggleNote('metereddays')" title="More info">i</span>
-      <div class="note" id="note-metereddays" style="display:none;">Bars = actual cost per day. The tick and shaded band = what the model expected for that day's weather, ± its typical miss — days landing inside the band are normal; days far outside are worth a look. Tap a bar for details; swipe or use the arrows to page through history.</div>
     </div>
 
     <div class="card">
@@ -462,14 +478,14 @@
     </div>
 
     <div class="card">
-      <h2 id="testCardTitle">Active Test</h2>
+      <div class="card-title-row"><h2 id="testCardTitle">Active Test</h2><span class="info-btn" onclick="toggleNote('activetesthistory')" title="More info">i</span></div>
+      <div class="note" id="note-activetesthistory" style="margin-bottom:8px; display:none;">Full period-by-period history lives in the Simulator tab → Settings &amp; Test Tracker.</div>
       <div id="testStatus"></div>
-      <span class="info-btn" onclick="toggleNote('activetesthistory')" title="More info">i</span>
-      <div class="note" id="note-activetesthistory" style="margin-top:8px; display:none;">Full period-by-period history lives in the Simulator tab → Settings &amp; Test Tracker.</div>
     </div>
 
     <div class="card">
-      <h2>Monthly Bill Estimate — Track Record</h2>
+      <div class="card-title-row"><h2>Monthly Bill Estimate — Track Record</h2><span class="info-btn" onclick="toggleNote('monthlyaccuracy')" title="More info">i</span></div>
+      <div class="note" id="note-monthlyaccuracy" style="margin-bottom:8px; display:none;">Electric only (gas is billed monthly, not metered day-by-day, so there's no real daily actual to compare against). Each bar is that month's real average $/day from AEP; the tick is what the same cost model would have predicted using that month's real weather — a retroactive check on the same model behind Today's/Monthly estimates above.</div>
       <svg id="monthlyAccuracyChart" viewBox="0 0 700 220" style="width:100%; height:auto;"></svg>
       <div class="note">
         <span class="legend-dot" style="background:var(--chart-soft);"></span>Actual $/day &nbsp;
@@ -477,8 +493,6 @@
         Tap a bar for details.
       </div>
       <div id="monthlyAccuracyDetail"></div>
-      <span class="info-btn" onclick="toggleNote('monthlyaccuracy')" title="More info">i</span>
-      <div class="note" id="note-monthlyaccuracy" style="margin-top:8px; display:none;">Electric only (gas is billed monthly, not metered day-by-day, so there's no real daily actual to compare against). Each bar is that month's real average $/day from AEP; the tick is what the same cost model would have predicted using that month's real weather — a retroactive check on the same model behind Today's/Monthly estimates above.</div>
     </div>
   </div>
 
@@ -496,7 +510,8 @@
     </div>
 
     <div class="card">
-      <h2>Outdoor Temperature Scenario</h2>
+      <div class="card-title-row"><h2>Outdoor Temperature Scenario</h2><span class="info-btn" onclick="toggleNote('outdoorscenario')" title="More info">i</span></div>
+      <div class="note" id="note-outdoorscenario" style="margin-bottom:8px; display:none;">Real data check: on 320 real cooling-season days, humidity had a statistically significant effect on electric cost even after accounting for temperature (p&lt;0.001) — a muggy 70°F day genuinely costs more to cool than a dry 70°F day. This home's actual humidity ranged 43%-96%, averaging ~72%. Effect only applies above the balance point, where the AC is doing real work.<br><br>The chart below plots cost across temperatures — the dashed line marks the current balance point (refit nightly), with cooling costs rising to its right and heating costs to its left.</div>
       <div class="note" id="liveWeatherNote" style="margin-bottom:10px;">Loading today's actual weather…</div>
       <div class="row">
         <label>Average outdoor temperature: <span class="val" id="tempLabel">45°F</span></label>
@@ -506,8 +521,6 @@
         <label>Humidity (relative): <span class="val" id="humidityLabel">72%</span> <span class="note" id="humidityNote" style="display:inline;"></span></label>
         <input type="range" id="humiditySlider" min="30" max="100" value="72" step="1" oninput="updateSim()">
       </div>
-      <span class="info-btn" onclick="toggleNote('humidityeffect')" title="More info">i</span>
-      <div class="note" id="note-humidityeffect" style="margin-bottom:8px; display:none;">Real data check: on 320 real cooling-season days, humidity had a statistically significant effect on electric cost even after accounting for temperature (p&lt;0.001) — a muggy 70°F day genuinely costs more to cool than a dry 70°F day. This home's actual humidity ranged 43%-96%, averaging ~72%. Effect only applies above the balance point, where the AC is doing real work.</div>
       <div class="grid2">
         <div class="result-box">
           <div class="note">Electric</div>
@@ -532,8 +545,6 @@
       <div id="extrapWarning"></div>
 
       <div class="chart-wrap">
-        <span class="info-btn" onclick="toggleNote('costcurve')" title="More info">i</span>
-      <div class="note" id="note-costcurve" style="margin-bottom:4px; display:none;">Cost curve across temperatures — the dashed line marks the current balance point (refit nightly), with cooling costs rising to its right and heating costs to its left.</div>
         <svg id="costChart" viewBox="0 0 700 220" style="width:100%; height:auto;"></svg>
         <div class="note">
           <span class="legend-dot" style="background:var(--chart-line);"></span>Total daily cost &nbsp;
@@ -543,17 +554,16 @@
     </div>
 
     <div class="card">
-      <h2>Hypothetical Setpoint Adjustment</h2>
-      <span class="info-btn" onclick="toggleNote('setpointscope')" title="More info">i</span>
-      <div class="note" id="note-setpointscope" style="margin-bottom:8px; display:none;">Models your <strong>main/central thermostat</strong> only (the electric AC + gas furnace both key off this setpoint). The window AC is tracked separately, with its own real measured wattage — see the appliance calculator below and the Outage Planner.</div>
+      <div class="card-title-row"><h2>Hypothetical Setpoint Adjustment</h2><span class="info-btn" onclick="toggleNote('setpointscope')" title="More info">i</span></div>
+      <div class="note" id="note-setpointscope" style="margin-bottom:8px; display:none;">
+        Models your <strong>main/central thermostat</strong> only (the electric AC + gas furnace both key off this setpoint). The window AC is tracked separately, with its own real measured wattage — see the appliance calculator below and the Outage Planner.
+        <br><br>
+        <strong>Rough industry rule of thumb (~3% energy change per degree) — not derived from your own data.</strong>
+        Your real 71→72°F central AC experiment actually showed a cost <em>increase</em>, not a decrease, so treat this as a ballpark exploration tool, not a guaranteed prediction. Also note: gas only reacts to this slider in winter (below the gas balance point) — in warm weather nearly all of the change you see below comes from electric cooling.
+      </div>
       <div class="row">
         <label>Shift cooling/heating setpoint by: <span class="val" id="deltaLabel">0°F</span></label>
         <input type="range" id="deltaSlider" min="-5" max="5" value="0" step="1" oninput="updateSim()">
-      </div>
-      <span class="info-btn" onclick="toggleNote('setpointdisclaimer')" title="More info">i</span>
-      <div class="note" id="note-setpointdisclaimer" style="display:none;">
-        <strong>Rough industry rule of thumb (~3% energy change per degree) — not derived from your own data.</strong>
-        Your real 71→72°F central AC experiment actually showed a cost <em>increase</em>, not a decrease, so treat this as a ballpark exploration tool, not a guaranteed prediction. Also note: gas only reacts to this slider in winter (below the gas balance point) — in warm weather nearly all of the change you see below comes from electric cooling.
       </div>
       <div class="result-box" style="margin-top:10px;">
         <div class="note">Adjusted total, per day</div>
@@ -564,7 +574,8 @@
     </div>
 
     <div class="card">
-      <h2>What Does This Appliance Cost?</h2>
+      <div class="card-title-row"><h2>What Does This Appliance Cost?</h2><span class="info-btn" onclick="toggleNote('appliancerate')" title="More info">i</span></div>
+      <div class="note" id="note-appliancerate" style="margin-bottom:8px; display:none;">Uses your marginal rate only (17.06¢/kWh) — the ~$22.62/month fixed charge doesn't change based on any one appliance, so it's left out of this comparison.</div>
       <div class="row">
         <label>Appliance</label>
         <select id="applianceSelect" onchange="updateApplianceCost()" style="width:100%; padding:8px;"></select>
@@ -589,34 +600,27 @@
           <div class="note" id="applianceShareOfBill"></div>
         </div>
       </div>
-      <span class="info-btn" onclick="toggleNote('appliancerate')" title="More info">i</span>
-      <div class="note" id="note-appliancerate" style="margin-top:8px; display:none;">Uses your marginal rate only (17.06¢/kWh) — the ~$22.62/month fixed charge doesn't change based on any one appliance, so it's left out of this comparison.</div>
     </div>
 
     <div class="card">
-      <h2>Model vs. Reality Check</h2>
-      <span class="info-btn" onclick="toggleNote('modelreality')" title="More info">i</span>
-      <div class="note" id="note-modelreality" style="margin-bottom:4px; display:none;">Every real day of metered electric usage (457 days, blue) plotted against the fitted model curve. Red dots are days since the 6/28 AC-settings change — watch whether they sit above or below the line.</div>
+      <div class="card-title-row"><h2>Model vs. Reality Check</h2><span class="info-btn" onclick="toggleNote('modelreality')" title="More info">i</span></div>
+      <div class="note" id="note-modelreality" style="margin-bottom:8px; display:none;">Every real day of metered electric usage (457 days, blue) plotted against the fitted model curve. Red dots are days since the 6/28 AC-settings change — watch whether they sit above or below the line. Snapshot as of the data through July 1, 2026 — ask to rebuild this as new AEP data comes in.</div>
       <svg id="realityChart" viewBox="0 0 700 220" style="width:100%; height:auto;"></svg>
       <div class="note">
         <span class="legend-dot" style="background:var(--chart-line);"></span>Model curve &nbsp;
         <span class="legend-dot" style="background:var(--chart-soft);"></span>Actual days (old settings) &nbsp;
         <span class="legend-dot" style="background:var(--bad);"></span>Actual days (new settings, since 6/28)
       </div>
-      <span class="info-btn" onclick="toggleNote('modelrealitysnapshot')" title="More info">i</span>
-      <div class="note" id="note-modelrealitysnapshot" style="margin-top:8px; display:none;">Snapshot as of the data through July 1, 2026 — ask to rebuild this as new AEP data comes in.</div>
     </div>
 
     <div class="card">
-      <h2>Settings &amp; Test Tracker</h2>
-      <span class="info-btn" onclick="toggleNote('settingstracker')" title="More info">i</span>
+      <div class="card-title-row"><h2>Settings &amp; Test Tracker</h2><span class="info-btn" onclick="toggleNote('settingstracker')" title="More info">i</span></div>
       <div class="note" id="note-settingstracker" style="margin-bottom:8px; display:none;">Pulled straight from <code>data/settings_changelog.csv</code> — log any future change there (new date + description, no code needed) and it shows up here automatically. "Model" is the same weather-fit model used everywhere else in this dashboard, which was built almost entirely from pre-change days, so it stands in for "what the original baseline would have cost" for each period's actual weather.</div>
       <div id="settingsTracker"></div>
     </div>
 
     <div class="card">
-      <h2>Seasonal Cost Calendar</h2>
-      <span class="info-btn" onclick="toggleNote('seasonalcalendar')" title="More info">i</span>
+      <div class="card-title-row"><h2>Seasonal Cost Calendar</h2><span class="info-btn" onclick="toggleNote('seasonalcalendar')" title="More info">i</span></div>
       <div class="note" id="note-seasonalcalendar" style="margin-bottom:8px; display:none;">Real historical averages by calendar month (pooled across all years in the dataset) — a projected year at a glance, model prediction vs. what actually happened.</div>
       <div id="seasonalCalendar"></div>
     </div>
@@ -640,10 +644,24 @@
     </div>
 
     <div class="card">
-      <h2>1. Batteries you'll deploy</h2>
-      <span class="info-btn" onclick="toggleNote('batterysetup')" title="More info">i</span>
-      <div class="note" id="note-batterysetup" style="margin-bottom:6px; display:none;">Set each battery's current charge if it's not sitting at 100% — the runtime estimate will use the real charge level, not an assumed full tank. Also set where each one is actually stationed — a battery can only power loads it's physically near, not the whole house at once.</div>
+      <div class="card-title-row"><h2>1. Batteries you'll deploy</h2><span class="info-btn" onclick="toggleNote('batterysetup')" title="More info">i</span></div>
+      <div class="note" id="note-batterysetup" style="margin-bottom:8px; display:none;">Set each battery's current charge if it's not sitting at 100% — the runtime estimate will use the real charge level, not an assumed full tank. Also set where each one is actually stationed — a battery can only power loads it's physically near, not the whole house at once.</div>
       <div id="batteryList"></div>
+      <div class="add-item-form">
+        <div class="row" style="margin-bottom:6px;">
+          <label>New battery / power station name</label>
+          <input type="text" id="newBatteryName" placeholder="e.g. Jackery 1000 Plus">
+        </div>
+        <div class="row" style="margin-bottom:6px;">
+          <label>Capacity (Wh)</label>
+          <input type="number" id="newBatteryWh" min="1" step="1" placeholder="e.g. 1000">
+        </div>
+        <div class="row" style="margin-bottom:8px;">
+          <label>Stationed at</label>
+          <select id="newBatteryStation"></select>
+        </div>
+        <button class="preset-btn" onclick="addCustomBattery()">+ Add battery</button>
+      </div>
       <div class="result-box" style="margin-top:10px;">
         <div class="note">Combined capacity across all stations (informational only — see runtime-by-station below for what's actually usable)</div>
         <div class="big-number" id="totalWh">0 Wh</div>
@@ -651,7 +669,8 @@
     </div>
 
     <div class="card">
-      <h2>2. Solar charging (optional)</h2>
+      <div class="card-title-row"><h2>2. Solar charging (optional)</h2><span class="info-btn" onclick="toggleNote('solarassumption')" title="More info">i</span></div>
+      <div class="note" id="note-solarassumption" style="margin-bottom:8px; display:none;">Assumes ~65% real-world efficiency vs. the 400W rating (panel angle, clouds, charge-controller loss) — not the nameplate spec. This adds charge back in during the day rather than a one-time boost, so it matters most for outages longer than 24 hours.</div>
       <div class="row" style="margin-bottom:8px;">
         <label style="display:flex; align-items:center; gap:8px; margin-bottom:0;">
           <input type="checkbox" id="chk-solar" onchange="updateOutage()"> Include EcoFlow 400W portable solar panel
@@ -662,16 +681,28 @@
         <input type="range" id="solarHours" min="0" max="10" value="5" step="0.5" oninput="updateOutage()">
         <label style="font-size:0.78rem; color:var(--sub); margin-top:6px; display:block;">Charging which station's battery: <select id="station-solar" onchange="updateOutage()"></select></label>
       </div>
-      <span class="info-btn" onclick="toggleNote('solarassumption')" title="More info">i</span>
-      <div class="note" id="note-solarassumption" style="display:none;">Assumes ~65% real-world efficiency vs. the 400W rating (panel angle, clouds, charge-controller loss) — not the nameplate spec. This adds charge back in during the day rather than a one-time boost, so it matters most for outages longer than 24 hours.</div>
       <div class="note" id="solarContribution" style="margin-top:6px; font-weight:600;"></div>
     </div>
 
     <div class="card">
-      <h2>3. Loads you want to run</h2>
-      <span class="info-btn" onclick="toggleNote('loadstation')" title="More info">i</span>
-      <div class="note" id="note-loadstation" style="margin-bottom:6px; display:none;">Set where each load actually is — the runtime by station below only counts a load against battery capacity that's stationed in the same place.</div>
+      <div class="card-title-row"><h2>3. Loads you want to run</h2><span class="info-btn" onclick="toggleNote('loadstation')" title="More info">i</span></div>
+      <div class="note" id="note-loadstation" style="margin-bottom:8px; display:none;">Set where each load actually is — the runtime by station below only counts a load against battery capacity that's stationed in the same place.</div>
       <div id="applianceList"></div>
+      <div class="add-item-form">
+        <div class="row" style="margin-bottom:6px;">
+          <label>New device name</label>
+          <input type="text" id="newApplianceName" placeholder="e.g. CPAP machine">
+        </div>
+        <div class="row" style="margin-bottom:6px;">
+          <label>Wattage</label>
+          <input type="number" id="newApplianceWatts" min="1" step="1" placeholder="e.g. 60">
+        </div>
+        <div class="row" style="margin-bottom:8px;">
+          <label>Located at</label>
+          <select id="newApplianceStation"></select>
+        </div>
+        <button class="preset-btn" onclick="addCustomAppliance()">+ Add device</button>
+      </div>
       <div class="result-box" style="margin-top:10px;">
         <div class="note">Combined load across all stations (informational only)</div>
         <div class="big-number" id="totalLoadW">0 W</div>
@@ -679,23 +710,19 @@
     </div>
 
     <div class="card">
-      <h2>Estimated runtime by station</h2>
-      <span class="info-btn" onclick="toggleNote('stationruntime')" title="More info">i</span>
-      <div class="note" id="note-stationruntime" style="margin-bottom:8px; display:none;">Each station can only run on the battery capacity actually stationed there — a fridge in the kitchen can't draw on a battery upstairs. This is the realistic view; the combined totals above assume everything could share power, which it can't.</div>
+      <div class="card-title-row"><h2>Estimated runtime by station</h2><span class="info-btn" onclick="toggleNote('stationruntime')" title="More info">i</span></div>
+      <div class="note" id="note-stationruntime" style="margin-bottom:8px; display:none;">Each station can only run on the battery capacity actually stationed there — a fridge in the kitchen can't draw on a battery upstairs. This is the realistic view; the combined totals above assume everything could share power, which it can't. Also assumes ~10% inverter/conversion loss per station — real-world runtime varies with cycling, temperature, and inverter idle draw (your March outage test showed the fridge alone using less than the flat estimate).</div>
       <div id="stationBreakdown"></div>
-      <span class="info-btn" onclick="toggleNote('inverterloss')" title="More info">i</span>
-      <div class="note" id="note-inverterloss" style="margin-top:14px; display:none;">Assumes ~10% inverter/conversion loss per station. Real-world runtime varies with cycling, temperature, and inverter idle draw (your March outage test showed the fridge alone using less than the flat estimate).</div>
       <div id="heaterWarning"></div>
     </div>
 
     <div class="card">
-      <h2>Need to hit a specific runtime? Get load-shedding suggestions</h2>
+      <div class="card-title-row"><h2>Need to hit a specific runtime? Get load-shedding suggestions</h2><span class="info-btn" onclick="toggleNote('suggestionsnote')" title="More info">i</span></div>
+      <div class="note" id="note-suggestionsnote" style="margin-bottom:8px; display:none;">Suggestions are per-station — dropping a load in the kitchen doesn't help the bedroom's runtime, so each constrained station gets its own advice.</div>
       <div class="row">
         <label>Target runtime: <span class="val" id="targetHoursLabel">24</span> hours</label>
         <input type="range" id="targetHours" min="4" max="72" value="24" step="1" oninput="updateOutage()">
       </div>
-      <span class="info-btn" onclick="toggleNote('suggestionsnote')" title="More info">i</span>
-      <div class="note" id="note-suggestionsnote" style="margin-bottom:8px; display:none;">Suggestions are per-station — dropping a load in the kitchen doesn't help the bedroom's runtime, so each constrained station gets its own advice.</div>
       <div id="suggestionBox"></div>
     </div>
   </div>
@@ -835,6 +862,27 @@ const APPLIANCES = [
   { id:"pool", name:"Pool pump", watts:120, tag:"avoid", defaultChecked:false, station:"outside" },
   { id:"heater", name:"Portable electric heater", watts:1200, tag:"avoid", defaultChecked:false, station:"basement", note:"Same short-outage exception logic as Window AC above: not a default choice (drains a Delta Pro in ~3hrs), but a brief run to protect pipes during a short/likely-to-resolve winter outage is reasonable. Not for extended/uncertain outages." }
 ];
+
+// ---------- CUSTOM DEVICES (future purchases, added from the UI) ----------
+// Lets new batteries/appliances be added straight from the Outage tab without a
+// code change/rebuild. Stored in this browser's localStorage only - it persists
+// across visits/reloads on this device, but won't show up on a different phone
+// or computer, and clearing Safari data would clear it too. For anything that
+// should be permanent (visible from any device), just mention it and it'll get
+// added to the real BATTERIES/APPLIANCES lists above instead.
+function loadCustomList(key) {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(key) || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) { return []; }
+}
+function saveCustomList(key, list) {
+  try { localStorage.setItem(key, JSON.stringify(list)); } catch (e) { /* storage unavailable - fail quietly */ }
+}
+let CUSTOM_BATTERIES = loadCustomList('hp_customBatteries');
+let CUSTOM_APPLIANCES = loadCustomList('hp_customAppliances');
+function allBatteries() { return BATTERIES.concat(CUSTOM_BATTERIES); }
+function allAppliances() { return APPLIANCES.concat(CUSTOM_APPLIANCES); }
 
 // ---------- ROOM SNAPSHOT ----------
 function renderRoomSnapshot() {
@@ -1025,10 +1073,23 @@ function updateSim() {
 }
 
 // ---------- APPLIANCE COST CALCULATOR ----------
+function appendApplianceOption(a) {
+  const sel = document.getElementById('applianceSelect');
+  if (!sel) return;
+  const opt = document.createElement('option');
+  opt.id = 'applianceOpt-' + a.id;
+  opt.value = a.id;
+  opt.text = a.name + ' (' + a.watts + 'W)';
+  // keep the "Other / custom wattage..." option pinned at the very end
+  const customOpt = sel.querySelector('option[value="custom"]');
+  if (customOpt) sel.insertBefore(opt, customOpt); else sel.appendChild(opt);
+}
+
 function buildApplianceSelect() {
   const sel = document.getElementById('applianceSelect');
-  APPLIANCES.forEach(a => {
+  allAppliances().forEach(a => {
     const opt = document.createElement('option');
+    opt.id = 'applianceOpt-' + a.id;
     opt.value = a.id;
     opt.text = a.name + ' (' + a.watts + 'W)';
     sel.appendChild(opt);
@@ -1051,7 +1112,7 @@ function updateApplianceCost() {
     watts = parseFloat(document.getElementById('customWatts').value) || 0;
   } else {
     customRow.style.display = 'none';
-    const appliance = APPLIANCES.find(a => a.id === sel.value);
+    const appliance = allAppliances().find(a => a.id === sel.value);
     watts = appliance ? appliance.watts : 0;
   }
 
@@ -1301,47 +1362,116 @@ function stationOptionsHtml(selectedId) {
   return STATIONS.map(s => `<option value="${s.id}" ${s.id === selectedId ? 'selected' : ''}>${s.name}</option>`).join('');
 }
 
+function makeBatteryRowEl(b) {
+  const div = document.createElement('div');
+  div.className = 'item';
+  div.id = 'row-battery-' + b.id;
+  const qtyControl = b.qty ? `<input type="number" class="qty-input" id="qty-${b.id}" value="${b.qty}" min="0" max="10" onchange="updateOutage()">` : '';
+  const chargeControl = `<input type="number" class="charge-input" id="charge-${b.id}" value="100" min="0" max="100" onchange="updateOutage()">%`;
+  const removeBtn = b.custom ? `<button class="remove-item-btn" onclick="removeCustomBattery('${b.id}')" aria-label="Remove">&times;</button>` : '';
+  div.innerHTML = `
+    <div class="item-left">
+      <input type="checkbox" id="chk-${b.id}" ${b.defaultChecked ? 'checked' : ''} onchange="updateOutage()">
+      <span>${b.name}${qtyControl}</span>
+      ${removeBtn}
+    </div>
+    <span class="watts">${b.wh} Wh${b.qty ? ' each' : ''} ${chargeControl}</span>
+    <div style="flex-basis:100%; margin-top:4px;">
+      <label style="font-size:0.78rem; color:var(--sub);">Stationed at: <select id="station-${b.id}" onchange="updateOutage()">${stationOptionsHtml(b.station)}</select></label>
+    </div>
+  `;
+  return div;
+}
+
 function buildBatteryList() {
   const container = document.getElementById('batteryList');
-  BATTERIES.forEach(b => {
-    const div = document.createElement('div');
-    div.className = 'item';
-    const qtyControl = b.qty ? `<input type="number" class="qty-input" id="qty-${b.id}" value="${b.qty}" min="0" max="10" onchange="updateOutage()">` : '';
-    const chargeControl = `<input type="number" class="charge-input" id="charge-${b.id}" value="100" min="0" max="100" onchange="updateOutage()">%`;
-    div.innerHTML = `
-      <div class="item-left">
-        <input type="checkbox" id="chk-${b.id}" ${b.defaultChecked ? 'checked' : ''} onchange="updateOutage()">
-        <span>${b.name}${qtyControl}</span>
-      </div>
-      <span class="watts">${b.wh} Wh${b.qty ? ' each' : ''} ${chargeControl}</span>
-      <div style="flex-basis:100%; margin-top:4px;">
-        <label style="font-size:0.78rem; color:var(--sub);">Stationed at: <select id="station-${b.id}" onchange="updateOutage()">${stationOptionsHtml(b.station)}</select></label>
-      </div>
-    `;
-    container.appendChild(div);
-  });
+  container.innerHTML = '';
+  allBatteries().forEach(b => container.appendChild(makeBatteryRowEl(b)));
+}
+
+function addCustomBattery() {
+  const nameEl = document.getElementById('newBatteryName');
+  const whEl = document.getElementById('newBatteryWh');
+  const stationEl = document.getElementById('newBatteryStation');
+  const name = (nameEl.value || '').trim();
+  const wh = parseFloat(whEl.value);
+  if (!name || !wh || wh <= 0) {
+    alert('Give the battery a name and a capacity in Wh above 0.');
+    return;
+  }
+  const b = { id: 'custom-' + Date.now(), name, wh, defaultChecked: false, station: stationEl.value || STATIONS[0].id, custom: true };
+  CUSTOM_BATTERIES.push(b);
+  saveCustomList('hp_customBatteries', CUSTOM_BATTERIES);
+  document.getElementById('batteryList').appendChild(makeBatteryRowEl(b));
+  nameEl.value = ''; whEl.value = '';
+  if (typeof refreshSliderFills === 'function') refreshSliderFills();
+  updateOutage();
+}
+
+function removeCustomBattery(id) {
+  CUSTOM_BATTERIES = CUSTOM_BATTERIES.filter(b => b.id !== id);
+  saveCustomList('hp_customBatteries', CUSTOM_BATTERIES);
+  const row = document.getElementById('row-battery-' + id);
+  if (row) row.remove();
+  updateOutage();
+}
+
+function makeApplianceRowEl(a) {
+  const div = document.createElement('div');
+  div.className = 'item';
+  div.id = 'row-appliance-' + a.id;
+  const removeBtn = a.custom ? `<button class="remove-item-btn" onclick="removeCustomAppliance('${a.id}')" aria-label="Remove">&times;</button>` : '';
+  div.innerHTML = `
+    <div class="item-left">
+      <input type="checkbox" id="chk-${a.id}" ${a.defaultChecked ? 'checked' : ''} onchange="updateOutage()">
+      <span>${a.name}</span>
+      <span class="tag ${a.tag}">${a.tag}</span>
+      ${a.note ? `<button class="info-btn" onclick="toggleNote('${a.id}')" aria-label="More info">i</button>` : ''}
+      ${removeBtn}
+    </div>
+    <span class="watts">${a.watts} W</span>
+    <div style="flex-basis:100%; margin-top:4px;">
+      <label style="font-size:0.78rem; color:var(--sub);">Located at: <select id="station-${a.id}" onchange="updateOutage()">${stationOptionsHtml(a.station)}</select></label>
+    </div>
+    ${a.note ? `<div class="note appliance-note" id="note-${a.id}" style="flex-basis:100%; display:none;">${a.note}</div>` : ''}
+  `;
+  return div;
 }
 
 function buildApplianceList() {
   const container = document.getElementById('applianceList');
-  APPLIANCES.forEach(a => {
-    const div = document.createElement('div');
-    div.className = 'item';
-    div.innerHTML = `
-      <div class="item-left">
-        <input type="checkbox" id="chk-${a.id}" ${a.defaultChecked ? 'checked' : ''} onchange="updateOutage()">
-        <span>${a.name}</span>
-        <span class="tag ${a.tag}">${a.tag}</span>
-        ${a.note ? `<button class="info-btn" onclick="toggleNote('${a.id}')" aria-label="More info">i</button>` : ''}
-      </div>
-      <span class="watts">${a.watts} W</span>
-      <div style="flex-basis:100%; margin-top:4px;">
-        <label style="font-size:0.78rem; color:var(--sub);">Located at: <select id="station-${a.id}" onchange="updateOutage()">${stationOptionsHtml(a.station)}</select></label>
-      </div>
-      ${a.note ? `<div class="note appliance-note" id="note-${a.id}" style="flex-basis:100%; display:none;">${a.note}</div>` : ''}
-    `;
-    container.appendChild(div);
-  });
+  container.innerHTML = '';
+  allAppliances().forEach(a => container.appendChild(makeApplianceRowEl(a)));
+}
+
+function addCustomAppliance() {
+  const nameEl = document.getElementById('newApplianceName');
+  const wattsEl = document.getElementById('newApplianceWatts');
+  const stationEl = document.getElementById('newApplianceStation');
+  const name = (nameEl.value || '').trim();
+  const watts = parseFloat(wattsEl.value);
+  if (!name || !watts || watts <= 0) {
+    alert('Give the device a name and a wattage above 0.');
+    return;
+  }
+  const a = { id: 'custom-' + Date.now(), name, watts, tag: 'nice', defaultChecked: false, station: stationEl.value || STATIONS[0].id, custom: true };
+  CUSTOM_APPLIANCES.push(a);
+  saveCustomList('hp_customAppliances', CUSTOM_APPLIANCES);
+  document.getElementById('applianceList').appendChild(makeApplianceRowEl(a));
+  appendApplianceOption(a);
+  nameEl.value = ''; wattsEl.value = '';
+  if (typeof refreshSliderFills === 'function') refreshSliderFills();
+  updateOutage();
+}
+
+function removeCustomAppliance(id) {
+  CUSTOM_APPLIANCES = CUSTOM_APPLIANCES.filter(a => a.id !== id);
+  saveCustomList('hp_customAppliances', CUSTOM_APPLIANCES);
+  const row = document.getElementById('row-appliance-' + id);
+  if (row) row.remove();
+  const opt = document.getElementById('applianceOpt-' + id);
+  if (opt) opt.remove();
+  updateOutage();
 }
 
 function setChecked(id, val) {
@@ -1357,8 +1487,8 @@ function setStation(id, stationId) {
 function applyOutagePreset(kind) {
   // reset all first - checked state AND station, so a previous preset's room
   // moves (e.g. Short's Delta 3 -> Kitchen) don't leak into the next one
-  BATTERIES.forEach(b => { setChecked(b.id, false); setStation(b.id, b.station); });
-  APPLIANCES.forEach(a => { setChecked(a.id, false); setStation(a.id, a.station); });
+  allBatteries().forEach(b => { setChecked(b.id, false); setStation(b.id, b.station); });
+  allAppliances().forEach(a => { setChecked(a.id, false); setStation(a.id, a.station); });
   const solarChk = document.getElementById('chk-solar');
   if (solarChk) solarChk.checked = false;
   setStation('solar', SOLAR.station);
@@ -1404,7 +1534,7 @@ function updateOutage() {
   const stationWh = {};
   STATIONS.forEach(s => stationWh[s.id] = 0);
   let totalWh = 0;
-  BATTERIES.forEach(b => {
+  allBatteries().forEach(b => {
     const chkEl = document.getElementById('chk-' + b.id);
     if (chkEl && chkEl.checked) {
       const qtyEl = document.getElementById('qty-' + b.id);
@@ -1425,7 +1555,7 @@ function updateOutage() {
   STATIONS.forEach(s => { stationW[s.id] = 0; stationAppliances[s.id] = []; });
   let totalW = 0;
   let heaterOn = false;
-  APPLIANCES.forEach(a => {
+  allAppliances().forEach(a => {
     const chkEl = document.getElementById('chk-' + a.id);
     if (chkEl && chkEl.checked) {
       const stationEl = document.getElementById('station-' + a.id);
@@ -1964,6 +2094,10 @@ buildApplianceList();
 buildApplianceSelect();
 const solarStationSel = document.getElementById('station-solar');
 if (solarStationSel) solarStationSel.innerHTML = stationOptionsHtml(SOLAR.station);
+const newBatteryStationSel = document.getElementById('newBatteryStation');
+if (newBatteryStationSel) newBatteryStationSel.innerHTML = stationOptionsHtml(STATIONS[0].id);
+const newApplianceStationSel = document.getElementById('newApplianceStation');
+if (newApplianceStationSel) newApplianceStationSel.innerHTML = stationOptionsHtml(STATIONS[0].id);
 updateSim();
 updateOutage();
 drawRealityChart();
