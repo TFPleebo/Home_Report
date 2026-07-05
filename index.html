@@ -470,9 +470,15 @@
 
     <div class="card">
       <h2>Monthly Bill Estimate — Track Record</h2>
-      <div id="monthlyAccuracy"></div>
+      <svg id="monthlyAccuracyChart" viewBox="0 0 700 220" style="width:100%; height:auto;"></svg>
+      <div class="note">
+        <span class="legend-dot" style="background:var(--chart-soft);"></span>Actual $/day &nbsp;
+        <span class="legend-dot" style="background:var(--chart-strong);"></span>Model $/day &nbsp;
+        Tap a bar for details.
+      </div>
+      <div id="monthlyAccuracyDetail"></div>
       <span class="info-btn" onclick="toggleNote('monthlyaccuracy')" title="More info">i</span>
-      <div class="note" id="note-monthlyaccuracy" style="margin-top:8px; display:none;">Electric only (gas is billed monthly, not metered day-by-day, so there's no real daily actual to compare against). Each month's "Actual" is your real average $/day from AEP; "Model" is what the same cost model would have predicted using that month's real weather — a retroactive check on the same model behind Today's/Monthly estimates above.</div>
+      <div class="note" id="note-monthlyaccuracy" style="margin-top:8px; display:none;">Electric only (gas is billed monthly, not metered day-by-day, so there's no real daily actual to compare against). Each bar is that month's real average $/day from AEP; the tick is what the same cost model would have predicted using that month's real weather — a retroactive check on the same model behind Today's/Monthly estimates above.</div>
     </div>
   </div>
 
@@ -1150,12 +1156,19 @@ function renderSettingsTracker() {
 }
 
 // Month-by-month electric actual-vs-model track record — computed purely from
-// DAILY_RECORDS (no new data file needed), one row per calendar month with any
+// DAILY_RECORDS (no new data file needed), one bar per calendar month with any
 // metered days. Electric only: gas is billed monthly, not metered daily, so
-// there's no real day-level gas actual to hold the model to.
-function renderMonthlyAccuracy() {
-  const el = document.getElementById('monthlyAccuracy');
-  if (!el) return;
+// there's no real day-level gas actual to hold the model to. Same bar+tick+tap
+// visual language as the "Metered Days" chart, just at month grain.
+let selectedMonthlyIdx = null, monthlyAccuracyAnimate = true;
+
+function selectMonthlyAccuracy(i) {
+  selectedMonthlyIdx = (selectedMonthlyIdx === i) ? null : i;
+  monthlyAccuracyAnimate = false;
+  renderMonthlyAccuracy();
+}
+
+function computeMonthlyAccuracyRows() {
   const byMonth = {};
   DAILY_RECORDS.forEach(r => {
     const ym = r[0].slice(0, 7);
@@ -1164,27 +1177,67 @@ function renderMonthlyAccuracy() {
     byMonth[ym].actual += actualElecCost(r[3]);
     byMonth[ym].model += electricDaily(r[1], r[2]).cost;
   });
-  const months = Object.keys(byMonth).sort().reverse();
-  if (!months.length) { el.innerHTML = '<div class="note">Not enough data yet.</div>'; return; }
   const MONTH_NAMES_FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  let rows = '';
-  months.forEach(ym => {
+  return Object.keys(byMonth).sort().map(ym => {
     const b = byMonth[ym];
-    const actualAvg = b.actual / b.n, modelAvg = b.model / b.n;
-    const delta = actualAvg - modelAvg;
-    const deltaColor = Math.abs(delta) < 0.5 ? 'var(--good)' : (delta > 0 ? 'var(--bad)' : 'var(--good)');
     const [y, mm] = ym.split('-');
-    const monthLabel = MONTH_NAMES_FULL[parseInt(mm, 10) - 1] + ' ' + y;
-    rows += `<div class="tracker-period">
-      <div class="tp-head"><span>${monthLabel}</span><span class="tp-sample">${b.n} metered day${b.n === 1 ? '' : 's'}</span></div>
-      <div class="tp-stats">
-        <span><span class="tp-label">Actual</span> $${actualAvg.toFixed(2)}/day</span>
-        <span><span class="tp-label">Model</span> $${modelAvg.toFixed(2)}/day</span>
-        <span style="color:${deltaColor}; font-weight:650;">${delta >= 0 ? '+' : ''}$${delta.toFixed(2)}/day</span>
-      </div>
-    </div>`;
+    return {
+      ym, n: b.n,
+      actual: b.actual / b.n,
+      model: b.model / b.n,
+      label: MONTH_NAMES_FULL[parseInt(mm, 10) - 1].slice(0, 3) + ' ' + y.slice(2)
+    };
   });
-  el.innerHTML = rows;
+}
+
+function renderMonthlyAccuracy() {
+  const svg = document.getElementById('monthlyAccuracyChart');
+  const detail = document.getElementById('monthlyAccuracyDetail');
+  if (!svg) return;
+  const rows = computeMonthlyAccuracyRows();
+  if (!rows.length) { svg.innerHTML = ''; if (detail) detail.innerHTML = '<div class="note">Not enough data yet.</div>'; return; }
+
+  const W = 700, H = 220, padL = 40, padR = 10, padT = 16, padB = 26;
+  let maxC = 0;
+  rows.forEach(r => { if (r.actual > maxC) maxC = r.actual; if (r.model > maxC) maxC = r.model; });
+  maxC = Math.ceil(maxC / 2) * 2;
+  const n = rows.length;
+  const slot = (W - padL - padR) / n;
+  const barW = Math.min(34, slot * 0.6);
+  const y = c => H - padB - (c / maxC) * (H - padT - padB);
+  const anim = monthlyAccuracyAnimate ? ' animate' : '';
+
+  let out = `
+    <line x1="${padL}" y1="${H - padB}" x2="${W - padR}" y2="${H - padB}" style="stroke:var(--chart-grid)"/>
+    <text x="${padL - 6}" y="${padT + 4}" font-size="10" style="fill:var(--chart-text)" text-anchor="end">$${maxC}</text>
+    <text x="${padL - 6}" y="${H - padB}" font-size="10" style="fill:var(--chart-text)" text-anchor="end">$0</text>`;
+  rows.forEach((r, i) => {
+    const cx = padL + slot * i + slot / 2;
+    const bx = cx - barW / 2;
+    const sel = selectedMonthlyIdx === i;
+    const dim = selectedMonthlyIdx !== null && !sel;
+    const fill = sel ? 'var(--chart-line)' : 'var(--chart-soft)';
+    out += `<rect class="bar${anim}" x="${bx.toFixed(1)}" y="${y(r.actual).toFixed(1)}" width="${barW.toFixed(1)}" height="${(H - padB - y(r.actual)).toFixed(1)}" rx="3" style="fill:${fill};${dim ? 'opacity:0.4;' : ''} animation-delay:${(i * 35)}ms"/>`;
+    out += `<line x1="${(cx - barW / 2 - 3).toFixed(1)}" y1="${y(r.model).toFixed(1)}" x2="${(cx + barW / 2 + 3).toFixed(1)}" y2="${y(r.model).toFixed(1)}" style="stroke:var(--chart-strong);${dim ? 'opacity:0.4;' : ''}" stroke-width="2"/>`;
+    out += `<text x="${cx.toFixed(1)}" y="${H - padB + 14}" font-size="9" style="fill:var(--chart-text)" text-anchor="middle">${r.label}</text>`;
+    out += `<rect class="tapzone" x="${(padL + slot * i).toFixed(1)}" y="${padT}" width="${slot.toFixed(1)}" height="${(H - padT - padB).toFixed(1)}" fill="transparent" onclick="selectMonthlyAccuracy(${i})"/>`;
+  });
+  svg.innerHTML = out;
+  monthlyAccuracyAnimate = false;
+
+  if (detail) {
+    if (selectedMonthlyIdx !== null && rows[selectedMonthlyIdx]) {
+      const r = rows[selectedMonthlyIdx];
+      const delta = r.actual - r.model;
+      const dc = delta <= 0 ? 'var(--good)' : 'var(--bad)';
+      detail.innerHTML = `<div class="day-detail">
+        <strong>${r.label}</strong> — $${r.actual.toFixed(2)}/day actual · ${r.n} metered day${r.n === 1 ? '' : 's'}
+        <div class="note" style="margin-top:3px;">Model expected $${r.model.toFixed(2)}/day for that month's real weather → <span style="color:${dc}; font-weight:650;">${delta >= 0 ? '+' : '−'}$${Math.abs(delta).toFixed(2)}/day</span> vs. expected</div>
+      </div>`;
+    } else {
+      detail.innerHTML = '';
+    }
+  }
 }
 
 // ---------- DATA STALENESS BANNER ----------
