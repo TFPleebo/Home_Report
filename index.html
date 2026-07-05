@@ -419,11 +419,26 @@
     <div class="card card-hero">
       <h2>Latest Metered Day</h2>
       <div id="todayHero"></div>
+      <div class="stat-grid" style="margin-top:14px;">
+        <div class="stat-box">
+          <div class="stat-label">Today's Price Estimate</div>
+          <div class="stat-value" id="todayEstimate">$0.00</div>
+          <div class="stat-sub" id="todayEstimateSub">Loading forecast…</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Monthly Bill Estimate</div>
+          <div class="stat-value" id="monthEstimate">$0</div>
+          <div class="stat-sub" id="monthEstimateSub">Loading forecast…</div>
+        </div>
+      </div>
+      <span class="info-btn" onclick="toggleNote('priceestimate')" title="More info">i</span>
+      <div class="note" id="note-priceestimate" style="display:none; margin-top:6px;">Today's estimate uses the average of today's forecast high/low fed into the same cost model used everywhere else on this page. Monthly estimate adds up actual metered days so far this month, plus modeled cost for the rest of the month — using the forecast for days it covers (up to ~16 days out) and this month's historical average temperature beyond that. Both are estimates, not bills — your real AEP/gas billing will differ.</div>
     </div>
 
     <div class="card">
       <h2>Right Now In Your House</h2>
-      <div class="note" style="margin-bottom:8px;">Last real reading from each sensor, straight from your Shortcut — not a prediction.</div>
+      <span class="info-btn" onclick="toggleNote('roomsnapshot')" title="More info">i</span>
+      <div class="note" id="note-roomsnapshot" style="margin-bottom:8px; display:none;">Last real reading from each sensor, straight from your Shortcut — not a prediction.</div>
       <div id="roomSnapshot"></div>
       <div class="note" id="roomSnapshotAsOf" style="margin-top:8px;"></div>
     </div>
@@ -437,7 +452,8 @@
       </div>
       <svg id="recentChart" viewBox="0 0 700 240" style="width:100%; height:auto;"></svg>
       <div id="recentDetail"></div>
-      <div class="note">Bars = actual cost per day. The tick and shaded band = what the model expected for that day's weather, ± its typical miss — days landing inside the band are normal; days far outside are worth a look. Tap a bar for details; swipe or use the arrows to page through history.</div>
+      <span class="info-btn" onclick="toggleNote('metereddays')" title="More info">i</span>
+      <div class="note" id="note-metereddays" style="display:none;">Bars = actual cost per day. The tick and shaded band = what the model expected for that day's weather, ± its typical miss — days landing inside the band are normal; days far outside are worth a look. Tap a bar for details; swipe or use the arrows to page through history.</div>
     </div>
 
     <div class="card">
@@ -448,7 +464,15 @@
     <div class="card">
       <h2 id="testCardTitle">Active Test</h2>
       <div id="testStatus"></div>
-      <div class="note" style="margin-top:8px;">Full period-by-period history lives in the Simulator tab → Settings &amp; Test Tracker.</div>
+      <span class="info-btn" onclick="toggleNote('activetesthistory')" title="More info">i</span>
+      <div class="note" id="note-activetesthistory" style="margin-top:8px; display:none;">Full period-by-period history lives in the Simulator tab → Settings &amp; Test Tracker.</div>
+    </div>
+
+    <div class="card">
+      <h2>Monthly Bill Estimate — Track Record</h2>
+      <div id="monthlyAccuracy"></div>
+      <span class="info-btn" onclick="toggleNote('monthlyaccuracy')" title="More info">i</span>
+      <div class="note" id="note-monthlyaccuracy" style="margin-top:8px; display:none;">Electric only (gas is billed monthly, not metered day-by-day, so there's no real daily actual to compare against). Each month's "Actual" is your real average $/day from AEP; "Model" is what the same cost model would have predicted using that month's real weather — a retroactive check on the same model behind Today's/Monthly estimates above.</div>
     </div>
   </div>
 
@@ -476,7 +500,8 @@
         <label>Humidity (relative): <span class="val" id="humidityLabel">72%</span> <span class="note" id="humidityNote" style="display:inline;"></span></label>
         <input type="range" id="humiditySlider" min="30" max="100" value="72" step="1" oninput="updateSim()">
       </div>
-      <div class="note" style="margin-bottom:8px;">Real data check: on 320 real cooling-season days, humidity had a statistically significant effect on electric cost even after accounting for temperature (p&lt;0.001) — a muggy 70°F day genuinely costs more to cool than a dry 70°F day. This home's actual humidity ranged 43%-96%, averaging ~72%. Effect only applies above the balance point, where the AC is doing real work.</div>
+      <span class="info-btn" onclick="toggleNote('humidityeffect')" title="More info">i</span>
+      <div class="note" id="note-humidityeffect" style="margin-bottom:8px; display:none;">Real data check: on 320 real cooling-season days, humidity had a statistically significant effect on electric cost even after accounting for temperature (p&lt;0.001) — a muggy 70°F day genuinely costs more to cool than a dry 70°F day. This home's actual humidity ranged 43%-96%, averaging ~72%. Effect only applies above the balance point, where the AC is doing real work.</div>
       <div class="grid2">
         <div class="result-box">
           <div class="note">Electric</div>
@@ -501,7 +526,8 @@
       <div id="extrapWarning"></div>
 
       <div class="chart-wrap">
-        <div class="note" style="margin-bottom:4px;">Cost curve across temperatures — the dashed line marks the current balance point (refit nightly), with cooling costs rising to its right and heating costs to its left.</div>
+        <span class="info-btn" onclick="toggleNote('costcurve')" title="More info">i</span>
+      <div class="note" id="note-costcurve" style="margin-bottom:4px; display:none;">Cost curve across temperatures — the dashed line marks the current balance point (refit nightly), with cooling costs rising to its right and heating costs to its left.</div>
         <svg id="costChart" viewBox="0 0 700 220" style="width:100%; height:auto;"></svg>
         <div class="note">
           <span class="legend-dot" style="background:var(--chart-line);"></span>Total daily cost &nbsp;
@@ -512,12 +538,14 @@
 
     <div class="card">
       <h2>Hypothetical Setpoint Adjustment</h2>
-      <div class="note" style="margin-bottom:8px;">Models your <strong>main/central thermostat</strong> only (the electric AC + gas furnace both key off this setpoint). The window AC is tracked separately, with its own real measured wattage — see the appliance calculator below and the Outage Planner.</div>
+      <span class="info-btn" onclick="toggleNote('setpointscope')" title="More info">i</span>
+      <div class="note" id="note-setpointscope" style="margin-bottom:8px; display:none;">Models your <strong>main/central thermostat</strong> only (the electric AC + gas furnace both key off this setpoint). The window AC is tracked separately, with its own real measured wattage — see the appliance calculator below and the Outage Planner.</div>
       <div class="row">
         <label>Shift cooling/heating setpoint by: <span class="val" id="deltaLabel">0°F</span></label>
         <input type="range" id="deltaSlider" min="-5" max="5" value="0" step="1" oninput="updateSim()">
       </div>
-      <div class="note">
+      <span class="info-btn" onclick="toggleNote('setpointdisclaimer')" title="More info">i</span>
+      <div class="note" id="note-setpointdisclaimer" style="display:none;">
         <strong>Rough industry rule of thumb (~3% energy change per degree) — not derived from your own data.</strong>
         Your real 71→72°F central AC experiment actually showed a cost <em>increase</em>, not a decrease, so treat this as a ballpark exploration tool, not a guaranteed prediction. Also note: gas only reacts to this slider in winter (below the gas balance point) — in warm weather nearly all of the change you see below comes from electric cooling.
       </div>
@@ -555,30 +583,35 @@
           <div class="note" id="applianceShareOfBill"></div>
         </div>
       </div>
-      <div class="note" style="margin-top:8px;">Uses your marginal rate only (17.06¢/kWh) — the ~$22.62/month fixed charge doesn't change based on any one appliance, so it's left out of this comparison.</div>
+      <span class="info-btn" onclick="toggleNote('appliancerate')" title="More info">i</span>
+      <div class="note" id="note-appliancerate" style="margin-top:8px; display:none;">Uses your marginal rate only (17.06¢/kWh) — the ~$22.62/month fixed charge doesn't change based on any one appliance, so it's left out of this comparison.</div>
     </div>
 
     <div class="card">
       <h2>Model vs. Reality Check</h2>
-      <div class="note" style="margin-bottom:4px;">Every real day of metered electric usage (457 days, blue) plotted against the fitted model curve. Red dots are days since the 6/28 AC-settings change — watch whether they sit above or below the line.</div>
+      <span class="info-btn" onclick="toggleNote('modelreality')" title="More info">i</span>
+      <div class="note" id="note-modelreality" style="margin-bottom:4px; display:none;">Every real day of metered electric usage (457 days, blue) plotted against the fitted model curve. Red dots are days since the 6/28 AC-settings change — watch whether they sit above or below the line.</div>
       <svg id="realityChart" viewBox="0 0 700 220" style="width:100%; height:auto;"></svg>
       <div class="note">
         <span class="legend-dot" style="background:var(--chart-line);"></span>Model curve &nbsp;
         <span class="legend-dot" style="background:var(--chart-soft);"></span>Actual days (old settings) &nbsp;
         <span class="legend-dot" style="background:var(--bad);"></span>Actual days (new settings, since 6/28)
       </div>
-      <div class="note" style="margin-top:8px;">Snapshot as of the data through July 1, 2026 — ask to rebuild this as new AEP data comes in.</div>
+      <span class="info-btn" onclick="toggleNote('modelrealitysnapshot')" title="More info">i</span>
+      <div class="note" id="note-modelrealitysnapshot" style="margin-top:8px; display:none;">Snapshot as of the data through July 1, 2026 — ask to rebuild this as new AEP data comes in.</div>
     </div>
 
     <div class="card">
       <h2>Settings &amp; Test Tracker</h2>
-      <div class="note" style="margin-bottom:8px;">Pulled straight from <code>data/settings_changelog.csv</code> — log any future change there (new date + description, no code needed) and it shows up here automatically. "Model" is the same weather-fit model used everywhere else in this dashboard, which was built almost entirely from pre-change days, so it stands in for "what the original baseline would have cost" for each period's actual weather.</div>
+      <span class="info-btn" onclick="toggleNote('settingstracker')" title="More info">i</span>
+      <div class="note" id="note-settingstracker" style="margin-bottom:8px; display:none;">Pulled straight from <code>data/settings_changelog.csv</code> — log any future change there (new date + description, no code needed) and it shows up here automatically. "Model" is the same weather-fit model used everywhere else in this dashboard, which was built almost entirely from pre-change days, so it stands in for "what the original baseline would have cost" for each period's actual weather.</div>
       <div id="settingsTracker"></div>
     </div>
 
     <div class="card">
       <h2>Seasonal Cost Calendar</h2>
-      <div class="note" style="margin-bottom:8px;">Real historical averages by calendar month (pooled across all years in the dataset) — a projected year at a glance, model prediction vs. what actually happened.</div>
+      <span class="info-btn" onclick="toggleNote('seasonalcalendar')" title="More info">i</span>
+      <div class="note" id="note-seasonalcalendar" style="margin-bottom:8px; display:none;">Real historical averages by calendar month (pooled across all years in the dataset) — a projected year at a glance, model prediction vs. what actually happened.</div>
       <div id="seasonalCalendar"></div>
     </div>
 
@@ -602,7 +635,8 @@
 
     <div class="card">
       <h2>1. Batteries you'll deploy</h2>
-      <div class="note" style="margin-bottom:6px;">Set each battery's current charge if it's not sitting at 100% — the runtime estimate will use the real charge level, not an assumed full tank. Also set where each one is actually stationed — a battery can only power loads it's physically near, not the whole house at once.</div>
+      <span class="info-btn" onclick="toggleNote('batterysetup')" title="More info">i</span>
+      <div class="note" id="note-batterysetup" style="margin-bottom:6px; display:none;">Set each battery's current charge if it's not sitting at 100% — the runtime estimate will use the real charge level, not an assumed full tank. Also set where each one is actually stationed — a battery can only power loads it's physically near, not the whole house at once.</div>
       <div id="batteryList"></div>
       <div class="result-box" style="margin-top:10px;">
         <div class="note">Combined capacity across all stations (informational only — see runtime-by-station below for what's actually usable)</div>
@@ -622,13 +656,15 @@
         <input type="range" id="solarHours" min="0" max="10" value="5" step="0.5" oninput="updateOutage()">
         <label style="font-size:0.78rem; color:var(--sub); margin-top:6px; display:block;">Charging which station's battery: <select id="station-solar" onchange="updateOutage()"></select></label>
       </div>
-      <div class="note">Assumes ~65% real-world efficiency vs. the 400W rating (panel angle, clouds, charge-controller loss) — not the nameplate spec. This adds charge back in during the day rather than a one-time boost, so it matters most for outages longer than 24 hours.</div>
+      <span class="info-btn" onclick="toggleNote('solarassumption')" title="More info">i</span>
+      <div class="note" id="note-solarassumption" style="display:none;">Assumes ~65% real-world efficiency vs. the 400W rating (panel angle, clouds, charge-controller loss) — not the nameplate spec. This adds charge back in during the day rather than a one-time boost, so it matters most for outages longer than 24 hours.</div>
       <div class="note" id="solarContribution" style="margin-top:6px; font-weight:600;"></div>
     </div>
 
     <div class="card">
       <h2>3. Loads you want to run</h2>
-      <div class="note" style="margin-bottom:6px;">Set where each load actually is — the runtime by station below only counts a load against battery capacity that's stationed in the same place.</div>
+      <span class="info-btn" onclick="toggleNote('loadstation')" title="More info">i</span>
+      <div class="note" id="note-loadstation" style="margin-bottom:6px; display:none;">Set where each load actually is — the runtime by station below only counts a load against battery capacity that's stationed in the same place.</div>
       <div id="applianceList"></div>
       <div class="result-box" style="margin-top:10px;">
         <div class="note">Combined load across all stations (informational only)</div>
@@ -638,9 +674,11 @@
 
     <div class="card">
       <h2>Estimated runtime by station</h2>
-      <div class="note" style="margin-bottom:8px;">Each station can only run on the battery capacity actually stationed there — a fridge in the kitchen can't draw on a battery upstairs. This is the realistic view; the combined totals above assume everything could share power, which it can't.</div>
+      <span class="info-btn" onclick="toggleNote('stationruntime')" title="More info">i</span>
+      <div class="note" id="note-stationruntime" style="margin-bottom:8px; display:none;">Each station can only run on the battery capacity actually stationed there — a fridge in the kitchen can't draw on a battery upstairs. This is the realistic view; the combined totals above assume everything could share power, which it can't.</div>
       <div id="stationBreakdown"></div>
-      <div class="note" style="margin-top:14px;">Assumes ~10% inverter/conversion loss per station. Real-world runtime varies with cycling, temperature, and inverter idle draw (your March outage test showed the fridge alone using less than the flat estimate).</div>
+      <span class="info-btn" onclick="toggleNote('inverterloss')" title="More info">i</span>
+      <div class="note" id="note-inverterloss" style="margin-top:14px; display:none;">Assumes ~10% inverter/conversion loss per station. Real-world runtime varies with cycling, temperature, and inverter idle draw (your March outage test showed the fridge alone using less than the flat estimate).</div>
       <div id="heaterWarning"></div>
     </div>
 
@@ -650,7 +688,8 @@
         <label>Target runtime: <span class="val" id="targetHoursLabel">24</span> hours</label>
         <input type="range" id="targetHours" min="4" max="72" value="24" step="1" oninput="updateOutage()">
       </div>
-      <div class="note" style="margin-bottom:8px;">Suggestions are per-station — dropping a load in the kitchen doesn't help the bedroom's runtime, so each constrained station gets its own advice.</div>
+      <span class="info-btn" onclick="toggleNote('suggestionsnote')" title="More info">i</span>
+      <div class="note" id="note-suggestionsnote" style="margin-bottom:8px; display:none;">Suggestions are per-station — dropping a load in the kitchen doesn't help the bedroom's runtime, so each constrained station gets its own advice.</div>
       <div id="suggestionBox"></div>
     </div>
   </div>
@@ -1108,6 +1147,44 @@ function renderSettingsTracker() {
   }
 
   container.innerHTML = rows;
+}
+
+// Month-by-month electric actual-vs-model track record — computed purely from
+// DAILY_RECORDS (no new data file needed), one row per calendar month with any
+// metered days. Electric only: gas is billed monthly, not metered daily, so
+// there's no real day-level gas actual to hold the model to.
+function renderMonthlyAccuracy() {
+  const el = document.getElementById('monthlyAccuracy');
+  if (!el) return;
+  const byMonth = {};
+  DAILY_RECORDS.forEach(r => {
+    const ym = r[0].slice(0, 7);
+    if (!byMonth[ym]) byMonth[ym] = { n: 0, actual: 0, model: 0 };
+    byMonth[ym].n += 1;
+    byMonth[ym].actual += actualElecCost(r[3]);
+    byMonth[ym].model += electricDaily(r[1], r[2]).cost;
+  });
+  const months = Object.keys(byMonth).sort().reverse();
+  if (!months.length) { el.innerHTML = '<div class="note">Not enough data yet.</div>'; return; }
+  const MONTH_NAMES_FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  let rows = '';
+  months.forEach(ym => {
+    const b = byMonth[ym];
+    const actualAvg = b.actual / b.n, modelAvg = b.model / b.n;
+    const delta = actualAvg - modelAvg;
+    const deltaColor = Math.abs(delta) < 0.5 ? 'var(--good)' : (delta > 0 ? 'var(--bad)' : 'var(--good)');
+    const [y, mm] = ym.split('-');
+    const monthLabel = MONTH_NAMES_FULL[parseInt(mm, 10) - 1] + ' ' + y;
+    rows += `<div class="tracker-period">
+      <div class="tp-head"><span>${monthLabel}</span><span class="tp-sample">${b.n} metered day${b.n === 1 ? '' : 's'}</span></div>
+      <div class="tp-stats">
+        <span><span class="tp-label">Actual</span> $${actualAvg.toFixed(2)}/day</span>
+        <span><span class="tp-label">Model</span> $${modelAvg.toFixed(2)}/day</span>
+        <span style="color:${deltaColor}; font-weight:650;">${delta >= 0 ? '+' : ''}$${delta.toFixed(2)}/day</span>
+      </div>
+    </div>`;
+  });
+  el.innerHTML = rows;
 }
 
 // ---------- DATA STALENESS BANNER ----------
@@ -1681,6 +1758,7 @@ function renderToday() {
   renderRecentChart();
   renderMonthSoFar();
   renderTestStatus();
+  renderMonthlyAccuracy();
   const eb = document.getElementById('eyebrowDate');
   if (eb) eb.innerText = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }).toUpperCase();
   const fl = document.getElementById('footerLine');
@@ -1708,12 +1786,18 @@ if (typeof window !== 'undefined') {
 // same one used to build the historical weather_log.csv for this project.
 const HOME_COORDS = { lat: 40.32174, lon: -80.6098 };
 
+// Populated from the daily forecast block of the same weather fetch used for the
+// live "Outside" reading — keyed by YYYY-MM-DD, e.g. FORECAST_BY_DATE["2026-07-05"] = {high, low}.
+let FORECAST_BY_DATE = {};
+
 function loadCurrentWeather() {
   const note = document.getElementById('liveWeatherNote');
   const outsideTile = document.getElementById('outsideTile');
   const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + HOME_COORDS.lat +
               '&longitude=' + HOME_COORDS.lon +
-              '&current=temperature_2m,relative_humidity_2m&temperature_unit=fahrenheit&timezone=auto';
+              '&current=temperature_2m,relative_humidity_2m' +
+              '&daily=temperature_2m_max,temperature_2m_min&forecast_days=16' +
+              '&temperature_unit=fahrenheit&timezone=auto';
 
   fetch(url).then(r => r.json()).then(data => {
     const cur = data && data.current;
@@ -1735,6 +1819,19 @@ function loadCurrentWeather() {
         <div class="room-temp">${rawT}°F</div>
         <div class="room-hum">${rawH}% humidity · live, ${timeStr}</div>`;
     }
+
+    FORECAST_BY_DATE = {};
+    const daily = data && data.daily;
+    if (daily && Array.isArray(daily.time)) {
+      daily.time.forEach((dateStr, i) => {
+        const hi = daily.temperature_2m_max[i], lo = daily.temperature_2m_min[i];
+        if (typeof hi === 'number' && typeof lo === 'number') {
+          FORECAST_BY_DATE[dateStr] = { high: hi, low: lo };
+        }
+      });
+    }
+    renderTodaysPriceEstimate(rawH);
+    renderMonthlyBillEstimate();
   }).catch(() => {
     if (note) note.innerText = 'Couldn\'t reach live weather right now — showing the default 45°F / 72% scenario instead. Move the sliders to explore other conditions.';
     if (outsideTile) {
@@ -1743,7 +1840,69 @@ function loadCurrentWeather() {
         <div class="room-temp">--°F</div>
         <div class="room-hum">Live weather unavailable</div>`;
     }
+    const todayEl = document.getElementById('todayEstimate'), todaySub = document.getElementById('todayEstimateSub');
+    if (todayEl) todayEl.innerText = '—';
+    if (todaySub) todaySub.innerText = 'Forecast unavailable';
+    renderMonthlyBillEstimate();
   });
+}
+
+// Today's Price Estimate: average of today's forecast high/low fed into the same
+// cost model used everywhere else — not a new model, just a new input to it.
+function renderTodaysPriceEstimate(todayHumidity) {
+  const el = document.getElementById('todayEstimate');
+  const sub = document.getElementById('todayEstimateSub');
+  if (!el) return;
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const fc = FORECAST_BY_DATE[todayStr];
+  if (!fc) {
+    el.innerText = '—';
+    if (sub) sub.innerText = 'Forecast unavailable';
+    return;
+  }
+  const avgT = (fc.high + fc.low) / 2;
+  const h = (typeof todayHumidity === 'number') ? todayHumidity : ELECTRIC.humidityBaseline;
+  const cost = electricDaily(avgT, h).cost + gasDaily(avgT);
+  el.innerText = '$' + cost.toFixed(2);
+  if (sub) sub.innerText = 'Forecast ' + Math.round(fc.high) + '°F / ' + Math.round(fc.low) + '°F';
+}
+
+// Monthly Bill Estimate: real AEP dollars for days already metered this month,
+// plus modeled cost for the rest of the month — forecast-based where the 16-day
+// forecast reaches, this month's historical average temp beyond that.
+function renderMonthlyBillEstimate() {
+  const el = document.getElementById('monthEstimate');
+  const sub = document.getElementById('monthEstimateSub');
+  if (!el || !DAILY_RECORDS.length) return;
+  const latest = DAILY_RECORDS[DAILY_RECORDS.length - 1][0];
+  const ym = latest.slice(0, 7);
+  const recs = DAILY_RECORDS.filter(r => r[0].slice(0, 7) === ym);
+  const monthIdx = parseInt(ym.slice(5), 10) - 1;
+  const year = parseInt(ym.slice(0, 4), 10);
+  const daysInMonth = new Date(year, monthIdx + 1, 0).getDate();
+  const m = MONTHLY_RECORDS[monthIdx];
+  const monthlyAvgGas = (m[5] !== null && m[5] !== undefined) ? m[5] : null;
+
+  const metered = new Set(recs.map(r => r[0]));
+  let total = 0;
+  recs.forEach(r => {
+    total += actualElecCost(r[3]) + (monthlyAvgGas !== null ? monthlyAvgGas : gasDaily(r[1]));
+  });
+
+  let forecastDays = 0, historicalDays = 0;
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateStr = ym + '-' + String(day).padStart(2, '0');
+    if (metered.has(dateStr)) continue;
+    const fc = FORECAST_BY_DATE[dateStr];
+    let tempEstimate;
+    if (fc) { tempEstimate = (fc.high + fc.low) / 2; forecastDays++; }
+    else { tempEstimate = m[1]; historicalDays++; }
+    const elec = electricDaily(tempEstimate, m[2]).cost;
+    const gas = monthlyAvgGas !== null ? monthlyAvgGas : gasDaily(tempEstimate);
+    total += elec + gas;
+  }
+  el.innerText = '$' + total.toFixed(0);
+  if (sub) sub.innerText = recs.length + ' actual + ' + forecastDays + ' forecast + ' + historicalDays + ' avg-based day' + (historicalDays === 1 ? '' : 's');
 }
 
 // ---------- INIT ----------
