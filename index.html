@@ -321,6 +321,14 @@
   .mini-table th { color: var(--sub); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
   .mini-table tr:last-child td { border-bottom: none; }
 
+  .tracker-period { padding: 12px 0; border-bottom: 0.5px solid var(--line); }
+  .tracker-period:first-child { padding-top: 2px; }
+  .tracker-period:last-child { border-bottom: none; padding-bottom: 2px; }
+  .tp-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; font-size: 14px; font-weight: 650; font-variant-numeric: tabular-nums; }
+  .tp-sample { font-size: 11.5px; font-weight: 600; color: var(--sub); white-space: nowrap; }
+  .tp-stats { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 8px; font-size: 14.5px; font-weight: 650; font-variant-numeric: tabular-nums; }
+  .tp-label { font-size: 10.5px; font-weight: 700; color: var(--sub); text-transform: uppercase; letter-spacing: 0.04em; margin-right: 3px; }
+  #seasonalCalendar, #stationBreakdown { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .room-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .room-tile {
     background: var(--tile-bg); border-radius: 16px; padding: 12px 14px; border: none;
@@ -468,7 +476,7 @@
         <label>Humidity (relative): <span class="val" id="humidityLabel">72%</span> <span class="note" id="humidityNote" style="display:inline;"></span></label>
         <input type="range" id="humiditySlider" min="30" max="100" value="72" step="1" oninput="updateSim()">
       </div>
-      <div class="note" style="margin-bottom:8px;">Real data check: on 320 real cooling-season days, humidity had a statistically significant effect on electric cost even after accounting for temperature (p&lt;0.001) — a muggy 70°F day genuinely costs more to cool than a dry 70°F day. This home's actual humidity ranged 43%-96%, averaging ~72%. Effect only applies above the 45°F balance point, where the AC is doing real work.</div>
+      <div class="note" style="margin-bottom:8px;">Real data check: on 320 real cooling-season days, humidity had a statistically significant effect on electric cost even after accounting for temperature (p&lt;0.001) — a muggy 70°F day genuinely costs more to cool than a dry 70°F day. This home's actual humidity ranged 43%-96%, averaging ~72%. Effect only applies above the balance point, where the AC is doing real work.</div>
       <div class="grid2">
         <div class="result-box">
           <div class="note">Electric</div>
@@ -493,7 +501,7 @@
       <div id="extrapWarning"></div>
 
       <div class="chart-wrap">
-        <div class="note" style="margin-bottom:4px;">Cost curve across temperatures — notice the "balance point" dip around 45°F, with electric (cooling) rising to the right and gas (heating) rising to the left.</div>
+        <div class="note" style="margin-bottom:4px;">Cost curve across temperatures — the dashed line marks the current balance point (refit nightly), with cooling costs rising to its right and heating costs to its left.</div>
         <svg id="costChart" viewBox="0 0 700 220" style="width:100%; height:auto;"></svg>
         <div class="note">
           <span class="legend-dot" style="background:var(--chart-line);"></span>Total daily cost &nbsp;
@@ -1070,21 +1078,18 @@ function renderSettingsTracker() {
     const periodLabel = startDate + (endDate ? ' → ' + endDate : ' → present');
     const sampleNote = n === 0 ? 'no real data yet' : (n < 5 ? n + ' real days (low confidence)' : n + ' real days');
 
-    rows += `<tr>
-      <td>${periodLabel}<div class="note" style="margin-top:2px;">${notes}</div></td>
-      <td>${cellActual}</td>
-      <td>${cellModel}</td>
-      <td style="color:${deltaColor}; font-weight:600;">${cellDelta}</td>
-      <td>${sampleNote}</td>
-    </tr>`;
+    rows += `<div class="tracker-period">
+      <div class="tp-head"><span>${periodLabel}</span><span class="tp-sample">${sampleNote}</span></div>
+      <div class="note" style="margin-top:2px;">${notes}</div>
+      <div class="tp-stats">
+        <span><span class="tp-label">Actual</span> ${cellActual}</span>
+        <span><span class="tp-label">Model</span> ${cellModel}</span>
+        <span style="color:${deltaColor}; font-weight:650;">${cellDelta}</span>
+      </div>
+    </div>`;
   }
 
-  container.innerHTML = `
-    <table class="mini-table">
-      <tr><th>Period</th><th>Actual $/day</th><th>Model $/day</th><th>Delta</th><th>Sample</th></tr>
-      ${rows}
-    </table>
-  `;
+  container.innerHTML = rows;
 }
 
 // ---------- DATA STALENESS BANNER ----------
