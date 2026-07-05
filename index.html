@@ -512,18 +512,20 @@
 
     <div class="card">
       <h2>Hypothetical Setpoint Adjustment</h2>
+      <div class="note" style="margin-bottom:8px;">Models your <strong>main/central thermostat</strong> only (the electric AC + gas furnace both key off this setpoint). The window AC is tracked separately, with its own real measured wattage — see the appliance calculator below and the Outage Planner.</div>
       <div class="row">
         <label>Shift cooling/heating setpoint by: <span class="val" id="deltaLabel">0°F</span></label>
         <input type="range" id="deltaSlider" min="-5" max="5" value="0" step="1" oninput="updateSim()">
       </div>
       <div class="note">
         <strong>Rough industry rule of thumb (~3% energy change per degree) — not derived from your own data.</strong>
-        Your real 71→72°F central AC experiment actually showed a cost <em>increase</em>, not a decrease, so treat this as a ballpark exploration tool, not a guaranteed prediction.
+        Your real 71→72°F central AC experiment actually showed a cost <em>increase</em>, not a decrease, so treat this as a ballpark exploration tool, not a guaranteed prediction. Also note: gas only reacts to this slider in winter (below the gas balance point) — in warm weather nearly all of the change you see below comes from electric cooling.
       </div>
       <div class="result-box" style="margin-top:10px;">
         <div class="note">Adjusted total, per day</div>
         <div class="big-number" id="adjustedCost">$0.00</div>
         <div class="note" id="deltaVsBase"></div>
+        <div class="note" id="deltaBreakdown" style="margin-top:6px;"></div>
       </div>
     </div>
 
@@ -952,6 +954,12 @@ function updateSim() {
   document.getElementById('adjustedCost').innerText = '$' + adjTotal.toFixed(2);
   const diff = adjTotal - total;
   document.getElementById('deltaVsBase').innerText = (diff >= 0 ? '+' : '') + '$' + diff.toFixed(2) + ' vs. no adjustment';
+
+  const elecDiff = adjElecCost - elec.cost;
+  const gasDiff = adjGas - gas;
+  const fmtDiff = d => (d >= 0 ? '+' : '') + '$' + d.toFixed(2);
+  document.getElementById('deltaBreakdown').innerText =
+    'Electric: $' + adjElecCost.toFixed(2) + ' (' + fmtDiff(elecDiff) + ')   •   Gas: $' + adjGas.toFixed(2) + ' (' + fmtDiff(gasDiff) + ')';
 
   drawChart(temp, total, humidity);
 
