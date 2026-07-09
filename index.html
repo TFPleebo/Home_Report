@@ -669,6 +669,12 @@
     </div>
 
     <div class="card">
+      <div class="card-title-row"><h2>1b. EGO battery-powered devices</h2><span class="info-btn" onclick="toggleNote('egodirect')" title="More info">i</span></div>
+      <div class="note" id="note-egodirect" style="margin-bottom:8px; display:none;">These EGO tools plug straight into an EGO battery — no inverter needed, and they can't run on the EcoFlow batteries. Each device uses its own battery, independent of whatever's powering the EGO Inverter above, so you can run more than one at once if you own enough batteries.</div>
+      <div id="egoDirectList"></div>
+    </div>
+
+    <div class="card">
       <div class="card-title-row"><h2>2. Solar charging (optional)</h2><span class="info-btn" onclick="toggleNote('solarassumption')" title="More info">i</span></div>
       <div class="note" id="note-solarassumption" style="margin-bottom:8px; display:none;">Assumes ~65% real-world efficiency vs. the 400W rating (panel angle, clouds, charge-controller loss) — not the nameplate spec. This adds charge back in during the day rather than a one-time boost, so it matters most for outages longer than 24 hours.</div>
       <div class="row" style="margin-bottom:8px;">
@@ -837,8 +843,24 @@ const BATTERIES = [
   { id:"delta3", name:"EcoFlow Delta 3", wh:1024, defaultChecked:true, note:"Living space backup - portable, was moved upstairs for AC testing 7/3/2026", station:"living" },
   { id:"river2", name:"EcoFlow River 2", wh:256, defaultChecked:false, note:"Small personal battery", station:"living" },
   { id:"anker", name:"Anker 548 Power Bank", wh:192, defaultChecked:false, note:"First-grab emergency light/power", station:"living" },
-  { id:"ego25", name:"EGO 2.5Ah battery", wh:140, qty:3, defaultChecked:false, note:"You own 3 of these", station:"basement" },
-  { id:"ego50", name:"EGO 5.0Ah battery", wh:280, qty:1, defaultChecked:false, note:"You own 1 of these", station:"basement" }
+  { id:"egoinverter", name:"EGO Power+ Inverter", egoSelect:true, defaultChecked:false, station:"basement", note:"Converts one EGO battery into AC power for anything you'd plug in. Only one battery powers it at a time and it's a single outlet, so treat it as one device at a time - pick which battery size you're using below once checked, and swap in a fresh one as it depletes." }
+];
+
+// EGO batteries aren't separate simultaneous capacity - only one is ever in the
+// Inverter (or a given native tool) at once. Pick a size per EGO device below
+// instead of adding wattage together. Wh = Ah x 56V nominal.
+const EGO_BATTERY_SIZES = [
+  { id:"2.5", label:"2.5Ah - 140Wh (own 3)", wh:140 },
+  { id:"5.0", label:"5.0Ah - 280Wh (own 1)", wh:280 },
+  { id:"7.5", label:"7.5Ah - 420Wh (own 1)", wh:420 }
+];
+
+// Native EGO tools that plug straight into an EGO battery - no inverter
+// involved, and they can't run on the EcoFlow batteries. Each one uses its
+// own battery, independent of whatever's powering the EGO Inverter above.
+const EGO_DIRECT_DEVICES = [
+  { id:"egofan-small", name:"EGO Fan (small)", watts:45, note:"Estimated wattage - tell me the actual model/spec and I'll swap in the real number." },
+  { id:"egofan-large", name:"EGO Fan (large)", watts:75, note:"Estimated wattage - tell me the actual model/spec and I'll swap in the real number." }
 ];
 
 const APPLIANCES = [
@@ -860,7 +882,8 @@ const APPLIANCES = [
   { id:"blanket", name:"Electric blanket", watts:120, tag:"nice", defaultChecked:false, station:"master" },
   { id:"windowac", name:"Window AC (upstairs bedroom)", watts:172, tag:"nice", defaultChecked:false, station:"master", note:"Confirmed by a full real 24-hour Delta 3 test (7/3 1pm - 7/4 1pm, 2026) - a complete measured cycle, not an extrapolation. Sustained 530-550W during active afternoon cooling (1-7pm), then near-zero (~1W idle) for most of the rest of the day/night once the setpoint was satisfied, plus two shorter cycles (~225W around 4am, ~210W around noon). Real 24hr total: 4,132 Wh = 172W average = $0.70/day - well under the original $2/day worry. Good fit for a SHORT outage with a known likely end (e.g. a car knocks out a pole) where sleeping through the heat matters more than rationing - not meant for a multi-day/uncertain outage." },
   { id:"pool", name:"Pool pump", watts:120, tag:"avoid", defaultChecked:false, station:"outside" },
-  { id:"heater", name:"Portable electric heater", watts:1200, tag:"avoid", defaultChecked:false, station:"basement", note:"Same short-outage exception logic as Window AC above: not a default choice (drains a Delta Pro in ~3hrs), but a brief run to protect pipes during a short/likely-to-resolve winter outage is reasonable. Not for extended/uncertain outages." }
+  { id:"heater", name:"Portable electric heater", watts:1200, tag:"avoid", defaultChecked:false, station:"basement", note:"Same short-outage exception logic as Window AC above: not a default choice (drains a Delta Pro in ~3hrs), but a brief run to protect pipes during a short/likely-to-resolve winter outage is reasonable. Not for extended/uncertain outages." },
+  { id:"coffeemaker", name:"Coffee maker", cupsMode:true, whPerCup:15, tag:"nice", defaultChecked:false, station:"kitchen", note:"Brewing is a short burst, not a continuous draw - estimated ~15 Wh per cup for a standard drip machine (rough estimate; tell me your model's wattage/brew time for a more accurate number). Counted as a one-time hit against that station's battery, not an ongoing load." }
 ];
 
 // ---------- CUSTOM DEVICES (future purchases, added from the UI) ----------
@@ -1362,6 +1385,10 @@ function stationOptionsHtml(selectedId) {
   return STATIONS.map(s => `<option value="${s.id}" ${s.id === selectedId ? 'selected' : ''}>${s.name}</option>`).join('');
 }
 
+function egoBatteryOptionsHtml(selectedId) {
+  return EGO_BATTERY_SIZES.map(z => `<option value="${z.id}" ${z.id === selectedId ? 'selected' : ''}>${z.label}</option>`).join('');
+}
+
 function makeBatteryRowEl(b) {
   const div = document.createElement('div');
   div.className = 'item';
@@ -1369,16 +1396,23 @@ function makeBatteryRowEl(b) {
   const qtyControl = b.qty ? `<input type="number" class="qty-input" id="qty-${b.id}" value="${b.qty}" min="0" max="10" onchange="updateOutage()">` : '';
   const chargeControl = `<input type="number" class="charge-input" id="charge-${b.id}" value="100" min="0" max="100" onchange="updateOutage()">%`;
   const removeBtn = b.custom ? `<button class="remove-item-btn" onclick="removeCustomBattery('${b.id}')" aria-label="Remove">&times;</button>` : '';
+  const infoBtn = b.note ? `<span class="info-btn" onclick="toggleNote('${b.id}')" title="More info">i</span>` : '';
+  const noteDiv = b.note ? `<div class="note appliance-note" id="note-${b.id}" style="flex-basis:100%; display:none;">${b.note}</div>` : '';
+  const wattsCell = b.egoSelect
+    ? `Battery: <select id="egobattery-${b.id}" onchange="updateOutage()">${egoBatteryOptionsHtml(EGO_BATTERY_SIZES[0].id)}</select> ${chargeControl}`
+    : `${b.wh} Wh${b.qty ? ' each' : ''} ${chargeControl}`;
   div.innerHTML = `
     <div class="item-left">
       <input type="checkbox" id="chk-${b.id}" ${b.defaultChecked ? 'checked' : ''} onchange="updateOutage()">
       <span>${b.name}${qtyControl}</span>
+      ${infoBtn}
       ${removeBtn}
     </div>
-    <span class="watts">${b.wh} Wh${b.qty ? ' each' : ''} ${chargeControl}</span>
+    <span class="watts">${wattsCell}</span>
     <div style="flex-basis:100%; margin-top:4px;">
       <label style="font-size:0.78rem; color:var(--sub);">Stationed at: <select id="station-${b.id}" onchange="updateOutage()">${stationOptionsHtml(b.station)}</select></label>
     </div>
+    ${noteDiv}
   `;
   return div;
 }
@@ -1421,6 +1455,9 @@ function makeApplianceRowEl(a) {
   div.className = 'item';
   div.id = 'row-appliance-' + a.id;
   const removeBtn = a.custom ? `<button class="remove-item-btn" onclick="removeCustomAppliance('${a.id}')" aria-label="Remove">&times;</button>` : '';
+  const wattsCell = a.cupsMode
+    ? `Cups: <input type="number" class="qty-input" id="cups-${a.id}" value="0" min="0" max="24" onchange="updateOutage()">`
+    : `${a.watts} W`;
   div.innerHTML = `
     <div class="item-left">
       <input type="checkbox" id="chk-${a.id}" ${a.defaultChecked ? 'checked' : ''} onchange="updateOutage()">
@@ -1429,13 +1466,40 @@ function makeApplianceRowEl(a) {
       ${a.note ? `<button class="info-btn" onclick="toggleNote('${a.id}')" aria-label="More info">i</button>` : ''}
       ${removeBtn}
     </div>
-    <span class="watts">${a.watts} W</span>
+    <span class="watts">${wattsCell}</span>
     <div style="flex-basis:100%; margin-top:4px;">
       <label style="font-size:0.78rem; color:var(--sub);">Located at: <select id="station-${a.id}" onchange="updateOutage()">${stationOptionsHtml(a.station)}</select></label>
     </div>
     ${a.note ? `<div class="note appliance-note" id="note-${a.id}" style="flex-basis:100%; display:none;">${a.note}</div>` : ''}
   `;
   return div;
+}
+
+function makeEgoDirectRowEl(d) {
+  const div = document.createElement('div');
+  div.className = 'item';
+  div.id = 'row-egodirect-' + d.id;
+  div.innerHTML = `
+    <div class="item-left">
+      <input type="checkbox" id="chk-${d.id}" onchange="updateOutage()">
+      <span>${d.name}</span>
+      ${d.note ? `<span class="info-btn" onclick="toggleNote('${d.id}')" title="More info">i</span>` : ''}
+    </div>
+    <span class="watts">${d.watts} W</span>
+    <div style="flex-basis:100%; margin-top:4px;">
+      <label style="font-size:0.78rem; color:var(--sub);">Battery: <select id="egobattery-${d.id}" onchange="updateOutage()">${egoBatteryOptionsHtml(EGO_BATTERY_SIZES[0].id)}</select></label>
+      <span id="runtime-${d.id}" style="font-size:0.78rem; color:var(--sub); margin-left:8px;"></span>
+    </div>
+    ${d.note ? `<div class="note appliance-note" id="note-${d.id}" style="flex-basis:100%; display:none;">${d.note}</div>` : ''}
+  `;
+  return div;
+}
+
+function buildEgoDirectList() {
+  const container = document.getElementById('egoDirectList');
+  if (!container) return;
+  container.innerHTML = '';
+  EGO_DIRECT_DEVICES.forEach(d => container.appendChild(makeEgoDirectRowEl(d)));
 }
 
 function buildApplianceList() {
@@ -1489,6 +1553,7 @@ function applyOutagePreset(kind) {
   // moves (e.g. Short's Delta 3 -> Kitchen) don't leak into the next one
   allBatteries().forEach(b => { setChecked(b.id, false); setStation(b.id, b.station); });
   allAppliances().forEach(a => { setChecked(a.id, false); setStation(a.id, a.station); });
+  EGO_DIRECT_DEVICES.forEach(d => setChecked(d.id, false));
   const solarChk = document.getElementById('chk-solar');
   if (solarChk) solarChk.checked = false;
   setStation('solar', SOLAR.station);
@@ -1537,11 +1602,18 @@ function updateOutage() {
   allBatteries().forEach(b => {
     const chkEl = document.getElementById('chk-' + b.id);
     if (chkEl && chkEl.checked) {
-      const qtyEl = document.getElementById('qty-' + b.id);
-      const qty = qtyEl ? parseInt(qtyEl.value || '0', 10) : 1;
       const chargeEl = document.getElementById('charge-' + b.id);
       const chargePct = chargeEl ? Math.max(0, Math.min(100, parseFloat(chargeEl.value) || 0)) : 100;
-      const wh = b.wh * qty * (chargePct / 100);
+      let wh;
+      if (b.egoSelect) {
+        const sizeEl = document.getElementById('egobattery-' + b.id);
+        const size = EGO_BATTERY_SIZES.find(z => z.id === (sizeEl ? sizeEl.value : EGO_BATTERY_SIZES[0].id)) || EGO_BATTERY_SIZES[0];
+        wh = size.wh * (chargePct / 100);
+      } else {
+        const qtyEl = document.getElementById('qty-' + b.id);
+        const qty = qtyEl ? parseInt(qtyEl.value || '0', 10) : 1;
+        wh = b.wh * qty * (chargePct / 100);
+      }
       const stationEl = document.getElementById('station-' + b.id);
       const stationId = stationEl ? stationEl.value : b.station;
       stationWh[stationId] = (stationWh[stationId] || 0) + wh;
@@ -1552,7 +1624,8 @@ function updateOutage() {
   // ---- gather load, grouped by station ----
   const stationW = {};
   const stationAppliances = {};
-  STATIONS.forEach(s => { stationW[s.id] = 0; stationAppliances[s.id] = []; });
+  const stationOneTimeWh = {};
+  STATIONS.forEach(s => { stationW[s.id] = 0; stationAppliances[s.id] = []; stationOneTimeWh[s.id] = 0; });
   let totalW = 0;
   let heaterOn = false;
   allAppliances().forEach(a => {
@@ -1560,10 +1633,32 @@ function updateOutage() {
     if (chkEl && chkEl.checked) {
       const stationEl = document.getElementById('station-' + a.id);
       const stationId = stationEl ? stationEl.value : a.station;
-      stationW[stationId] = (stationW[stationId] || 0) + a.watts;
-      stationAppliances[stationId].push(a);
-      totalW += a.watts;
-      if (a.id === 'heater') heaterOn = true;
+      if (a.cupsMode) {
+        // one-time brew energy, not a continuous load - doesn't add to stationW/totalW
+        const cupsEl = document.getElementById('cups-' + a.id);
+        const cups = cupsEl ? Math.max(0, parseInt(cupsEl.value || '0', 10)) : 0;
+        stationOneTimeWh[stationId] = (stationOneTimeWh[stationId] || 0) + cups * (a.whPerCup || 0);
+      } else {
+        stationW[stationId] = (stationW[stationId] || 0) + a.watts;
+        stationAppliances[stationId].push(a);
+        totalW += a.watts;
+        if (a.id === 'heater') heaterOn = true;
+      }
+    }
+  });
+
+  // ---- EGO native tools: each runs off its own EGO battery, no inverter/station pool involved ----
+  EGO_DIRECT_DEVICES.forEach(d => {
+    const chkEl = document.getElementById('chk-' + d.id);
+    const runtimeEl = document.getElementById('runtime-' + d.id);
+    if (!runtimeEl) return;
+    if (chkEl && chkEl.checked) {
+      const sizeEl = document.getElementById('egobattery-' + d.id);
+      const size = EGO_BATTERY_SIZES.find(z => z.id === (sizeEl ? sizeEl.value : EGO_BATTERY_SIZES[0].id)) || EGO_BATTERY_SIZES[0];
+      const hours = size.wh / d.watts;
+      runtimeEl.innerText = '\u2248 ' + hours.toFixed(1) + 'h on a ' + size.label.split(' - ')[0] + ' battery';
+    } else {
+      runtimeEl.innerText = '';
     }
   });
 
@@ -1613,9 +1708,14 @@ function updateOutage() {
   STATIONS.forEach(s => {
     const wh = stationWh[s.id] || 0;
     const w = stationW[s.id] || 0;
-    if (wh <= 0 && w <= 0) return; // nothing assigned here — leave it out of the table entirely
+    const oneTimeWh = stationOneTimeWh[s.id] || 0;
+    if (wh <= 0 && w <= 0 && oneTimeWh <= 0) return; // nothing assigned here — leave it out of the table entirely
     anyStationShown = true;
-    const usableWh = wh * 0.9;
+    const usableWh = Math.max(0, wh * 0.9 - oneTimeWh);
+
+    if (oneTimeWh > 0) {
+      suggestionHtml += `<div class="note" style="margin-bottom:6px;">\u2615 <strong>${s.name}</strong>: reserves ~${Math.round(oneTimeWh)} Wh up front for coffee brewing (one-time, not counted in the ongoing load above).</div>`;
+    }
 
     let hoursStr, statusColor, hoursVal = null;
     if (w <= 0) {
@@ -2091,6 +2191,7 @@ function renderMonthlyBillEstimate() {
 // ---------- INIT ----------
 buildBatteryList();
 buildApplianceList();
+buildEgoDirectList();
 buildApplianceSelect();
 const solarStationSel = document.getElementById('station-solar');
 if (solarStationSel) solarStationSel.innerHTML = stationOptionsHtml(SOLAR.station);
