@@ -867,7 +867,7 @@ const APPLIANCES = [
   { id:"mainfridge", name:"Main refrigerator", watts:100, tag:"essential", defaultChecked:true, station:"kitchen" },
   { id:"freezer", name:"Deep freezer", watts:120, tag:"essential", defaultChecked:false, station:"kitchen" },
   { id:"router", name:"WiFi router", watts:12, tag:"essential", defaultChecked:true, station:"living" },
-  { id:"lights", name:"Low-watt lights (LED)", watts:20, tag:"essential", defaultChecked:true, station:"living" },
+  { id:"lights", name:"Low-watt lights (LED)", watts:8, tag:"essential", defaultChecked:true, station:"living", note:"Assumes a single LED bulb on at once (~5-10W range for your bulbs) - the realistic essential-use case, not several rooms lit up at once." },
   { id:"fan", name:"Fan(s)", watts:35, tag:"essential", defaultChecked:true, station:"living" },
   { id:"phones", name:"Phone/tablet charging", watts:4, tag:"essential", defaultChecked:true, station:"living", note:"Averaged across a full day, not the ~15-20W a phone pulls while actively fast-charging. Phones/tablets don't stay plugged in and drawing power the whole outage - they top off for an hour or two, then sit near 0W once full. If this station is charging way more devices than a typical day, bump the wattage up." },
   { id:"phones-riley", name:"Phone/tablet charging — Riley's Room", watts:4, tag:"nice", defaultChecked:false, station:"riley", note:"Averaged across a full day, not the ~15-20W a phone pulls while actively fast-charging. Phones/tablets don't stay plugged in and drawing power the whole outage - they top off for an hour or two, then sit near 0W once full. If this station is charging way more devices than a typical day, bump the wattage up." },
