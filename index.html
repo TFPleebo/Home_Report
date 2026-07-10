@@ -478,8 +478,8 @@
     </div>
 
     <div class="card">
-      <div class="card-title-row"><h2 id="testCardTitle">Active Test</h2><span class="info-btn" onclick="toggleNote('activetesthistory')" title="More info">i</span></div>
-      <div class="note" id="note-activetesthistory" style="margin-bottom:8px; display:none;">Full period-by-period history lives in the Simulator tab → Settings &amp; Test Tracker.</div>
+      <div class="card-title-row"><h2 id="testCardTitle">Recent Performance</h2><span class="info-btn" onclick="toggleNote('recentperformance')" title="More info">i</span></div>
+      <div class="note" id="note-recentperformance" style="margin-bottom:8px; display:none;">Three views of the same actual-vs-model comparison: a live rolling average (last 14 days), a running total since the last settings change, and the single most surprising day recently. Full period-by-period history lives in the Simulator tab → Settings &amp; Test Tracker.</div>
       <div id="testStatus"></div>
     </div>
 
@@ -1971,61 +1971,50 @@ function renderMonthSoFar() {
   `;
 }
 
-function renderTestStatus() {
+function renderRecentPerformance() {
   const el = document.getElementById('testStatus');
   if (!el) return;
   const titleEl = document.getElementById('testCardTitle');
+  if (titleEl) titleEl.innerText = 'Recent Performance';
+  if (!DAILY_RECORDS.length) { el.innerHTML = '<div class="note">Not enough data yet.</div>'; return; }
+
+  const withDelta = DAILY_RECORDS.map(r => {
+    const [date, tempF, humidityPct, kwh] = r;
+    const actual = actualElecCost(kwh);
+    const model = electricDaily(tempF, humidityPct).cost;
+    return { date, tempF, humidityPct, actual, model, delta: actual - model };
+  });
+
+  // 1. rolling window - always live, never goes stale between settings changes
+  const windowN = Math.min(14, withDelta.length);
+  const recent = withDelta.slice(-windowN);
+  const rollingAvg = recent.reduce((s, r) => s + r.delta, 0) / recent.length;
+  const rollColor = rollingAvg <= 0 ? 'var(--good)' : 'var(--bad)';
+  const rollWord = rollingAvg <= 0 ? 'saving' : 'costing';
+  let html = `<div class="delta-line" style="color:${rollColor}; margin-top:0;">${rollingAvg <= 0 ? '▼' : '▲'} Last ${recent.length} day${recent.length === 1 ? '' : 's'}: ${rollWord} $${Math.abs(rollingAvg).toFixed(2)}/day vs. the model</div>`;
+
+  // 2. cumulative total since the last settings change
   const log = [...SETTINGS_LOG].sort((a, b) => (a[0] < b[0] ? -1 : 1));
   const cur = log[log.length - 1];
   const startDate = cur[0], notes = cur[2];
-  const days = DAILY_RECORDS.filter(r => r[0] >= startDate);
-  const n = days.length;
-  const ageDays = Math.floor((new Date() - new Date(startDate + 'T00:00:00')) / 86400000);
-
-  // Fresh settings change -> show test progress
-  if (n < 15 && ageDays < 45) {
-    if (titleEl) titleEl.innerText = 'Active Test';
-    let body;
-    if (n === 0) {
-      body = '<div class="note">No metered days under these settings yet — check back after the next AEP export.</div>';
-    } else {
-      const actualAvg = days.reduce((s, r) => s + actualElecCost(r[3]), 0) / n;
-      const modelAvg = days.reduce((s, r) => s + electricDaily(r[1], r[2]).cost, 0) / n;
-      const delta = actualAvg - modelAvg;
-      const color = delta <= 0 ? 'var(--good)' : 'var(--bad)';
-      const word = delta <= 0 ? 'saving' : 'costing';
-      body = `<div class="delta-line" style="color:${color}; margin-top:0;">${delta <= 0 ? '▼' : '▲'} Early read: ${word} $${Math.abs(delta).toFixed(2)}/day vs. the model</div>
-        <div class="note">${n} of ~15 real days collected — ${n < 5 ? 'low' : 'moderate'} confidence, the number will settle as days accumulate.</div>`;
-    }
-    el.innerHTML = `<div class="note" style="margin-top:0; margin-bottom:6px;"><strong>Since ${startDate}:</strong> ${notes}</div>` + body;
-    return;
+  const eraRows = withDelta.filter(r => r.date >= startDate);
+  if (eraRows.length > 0) {
+    const totalDelta = eraRows.reduce((s, r) => s + r.delta, 0);
+    const eraColor = totalDelta <= 0 ? 'var(--good)' : 'var(--bad)';
+    const eraWord = totalDelta <= 0 ? 'saved' : 'cost';
+    html += `<div class="note" style="margin-top:8px;"><strong>Since ${startDate}:</strong> ${eraWord} <strong style="color:${eraColor};">$${Math.abs(totalDelta).toFixed(2)}</strong> ${totalDelta <= 0 ? 'less' : 'more'} than the model over ${eraRows.length} day${eraRows.length === 1 ? '' : 's'}.</div><div class="note" style="margin-top:2px; color:var(--sub); font-size:0.82rem;">${notes}</div>`;
   }
 
-  // Nothing fresh to test -> compare this month against the same month last year
-  if (titleEl) titleEl.innerText = 'Vs. Last Year';
-  if (!DAILY_RECORDS.length) { el.innerHTML = '<div class="note">Not enough data yet.</div>'; return; }
-  const latest = DAILY_RECORDS[DAILY_RECORDS.length - 1][0];
-  const ym = latest.slice(0, 7);
-  const year = parseInt(ym.slice(0, 4), 10), month = ym.slice(5);
-  const monthName = ['January','February','March','April','May','June','July','August','September','October','November','December'][parseInt(month, 10) - 1];
-  const thisM = DAILY_RECORDS.filter(r => r[0].slice(0, 7) === ym);
-  const lastM = DAILY_RECORDS.filter(r => r[0].slice(0, 7) === (year - 1) + '-' + month);
-  if (!lastM.length || !thisM.length) {
-    el.innerHTML = `<div class="note">No ${monthName} ${year - 1} data to compare against yet.</div>`;
-    return;
+  // 3. biggest surprise in the last 30 days - either direction
+  const surpriseWindow = withDelta.slice(-30);
+  if (surpriseWindow.length > 0) {
+    const biggest = surpriseWindow.reduce((a, b) => Math.abs(b.delta) > Math.abs(a.delta) ? b : a);
+    const sColor = biggest.delta <= 0 ? 'var(--good)' : 'var(--bad)';
+    const sWord = biggest.delta <= 0 ? 'under' : 'over';
+    html += `<div class="note" style="margin-top:6px;">Biggest recent surprise: <strong>${fmtDateNice(biggest.date)}</strong> — <span style="color:${sColor}; font-weight:600;">$${Math.abs(biggest.delta).toFixed(2)} ${sWord} model</span> (${biggest.tempF.toFixed(0)}°F, ${biggest.humidityPct.toFixed(0)}% humidity)</div>`;
   }
-  const avg = a => a.reduce((s, r) => s + actualElecCost(r[3]), 0) / a.length;
-  const tAvg = a => a.reduce((s, r) => s + r[1], 0) / a.length;
-  const nowAvg = avg(thisM), prevAvg = avg(lastM);
-  const d = nowAvg - prevAvg;
-  const color = d <= 0 ? 'var(--good)' : 'var(--bad)';
-  el.innerHTML = `
-    <div class="stat-grid">
-      <div class="stat-box"><div class="stat-label">${monthName} ${year}</div><div class="stat-value">$${nowAvg.toFixed(2)}</div><div class="stat-sub">per day · ${thisM.length} day${thisM.length === 1 ? '' : 's'} · avg ${tAvg(thisM).toFixed(0)}°F</div></div>
-      <div class="stat-box"><div class="stat-label">${monthName} ${year - 1}</div><div class="stat-value">$${prevAvg.toFixed(2)}</div><div class="stat-sub">per day · ${lastM.length} days · avg ${tAvg(lastM).toFixed(0)}°F</div></div>
-    </div>
-    <div class="delta-line" style="color:${color};">${d <= 0 ? '▼' : '▲'} ${d <= 0 ? '$' + Math.abs(d).toFixed(2) + '/day cheaper' : '$' + d.toFixed(2) + '/day more expensive'} than last ${monthName}</div>
-    <div class="note">Raw comparison — weather differs year to year (note the avg temps), so read gaps with that in mind.</div>`;
+
+  el.innerHTML = html;
 }
 
 function renderModelNotes() {
@@ -2047,7 +2036,7 @@ function renderToday() {
   renderTodayHero();
   renderRecentChart();
   renderMonthSoFar();
-  renderTestStatus();
+  renderRecentPerformance();
   renderMonthlyAccuracy();
   const eb = document.getElementById('eyebrowDate');
   if (eb) eb.innerText = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }).toUpperCase();
