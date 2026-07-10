@@ -859,8 +859,8 @@ const EGO_BATTERY_SIZES = [
 // involved, and they can't run on the EcoFlow batteries. Each one uses its
 // own battery, independent of whatever's powering the EGO Inverter above.
 const EGO_DIRECT_DEVICES = [
-  { id:"egofan-small", name:"EGO Fan (small)", watts:6, note:"Based on your real heat-wave use: ran almost 24 hours on low speed on a single 2.5Ah (140Wh) battery, which works out to ~6W actual draw at low speed. Medium/high speed will drain faster than this estimate - let me know if you want separate numbers per speed." },
-  { id:"egofan-large", name:"EGO Fan (large)", watts:6, note:"Based on your real heat-wave use: ran almost 24 hours on low speed on a single 2.5Ah (140Wh) battery, which works out to ~6W actual draw at low speed. Medium/high speed will drain faster than this estimate - let me know if you want separate numbers per speed." }
+  { id:"egofan-small", name:"EGO Fan (10\" FN1000, small)", watts:6, note:"Low speed matches your real heat-wave test: ~24 hrs on a 2.5Ah (140Wh) battery \u2248 6W - what the calculator uses. No published high-speed drain test exists for this model (1,700 CFM max, about a third of the 18\" fan's airflow) - a rough estimate for high/turbo would be ~25-40W, but that's reasoning, not a measurement, so treat it as lower-confidence if you ever plan around running it above low speed." },
+  { id:"egofan-large", name:"EGO Fan (18\" FN1800, large)", watts:6, note:"Low speed matches your real heat-wave test: ~24 hrs on a 2.5Ah (140Wh) battery \u2248 6W - what the calculator uses. For reference, a third-party drain test (Pro Tool Reviews) ran this exact fan on a 5.0Ah (280Wh) battery: High \u2248 65W (4h17m to shutoff), Turbo/max 5,000 CFM \u2248 98W (2h51m). Real packs deliver ~90-95% of rated Wh, so actual draw is likely a touch lower (~60W high, ~90W turbo). Only relevant if you'd run it above low speed - the calculator still assumes low." }
 ];
 
 const APPLIANCES = [
