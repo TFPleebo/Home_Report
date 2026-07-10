@@ -878,12 +878,12 @@ const APPLIANCES = [
   { id:"homepod", name:"HomePod", watts:10, tag:"nice", defaultChecked:false, station:"master" },
   { id:"console", name:"Game console", watts:70, tag:"nice", defaultChecked:false, station:"living" },
   { id:"laptop", name:"MacBook Air", watts:60, tag:"nice", defaultChecked:false, station:"living" },
-  { id:"microwave", name:"Microwave (short bursts)", watts:1000, tag:"nice", defaultChecked:false, station:"kitchen" },
+  { id:"microwave", name:"Microwave", minutesMode:true, runningWatts:1550, tag:"nice", defaultChecked:false, station:"kitchen", note:"1,550W is real wall draw, not the '1,000W' cooking-power label on the door (that's output, not input - microwaves pull noticeably more than their labeled rating). Enter minutes of actual cooking per day, not the whole outage - it's a one-time hit against that station's battery like the coffee maker, not a continuous load." },
   { id:"blanket", name:"Electric blanket", watts:120, tag:"nice", defaultChecked:false, station:"master" },
   { id:"windowac", name:"Window AC (upstairs bedroom)", watts:172, tag:"nice", defaultChecked:false, station:"master", note:"Confirmed by a full real 24-hour Delta 3 test (7/3 1pm - 7/4 1pm, 2026) - a complete measured cycle, not an extrapolation. Sustained 530-550W during active afternoon cooling (1-7pm), then near-zero (~1W idle) for most of the rest of the day/night once the setpoint was satisfied, plus two shorter cycles (~225W around 4am, ~210W around noon). Real 24hr total: 4,132 Wh = 172W average = $0.70/day - well under the original $2/day worry. Good fit for a SHORT outage with a known likely end (e.g. a car knocks out a pole) where sleeping through the heat matters more than rationing - not meant for a multi-day/uncertain outage." },
   { id:"pool", name:"Pool pump", watts:120, tag:"avoid", defaultChecked:false, station:"outside" },
   { id:"heater", name:"Portable electric heater", watts:1200, tag:"avoid", defaultChecked:false, station:"basement", note:"Same short-outage exception logic as Window AC above: not a default choice (drains a Delta Pro in ~3hrs), but a brief run to protect pipes during a short/likely-to-resolve winter outage is reasonable. Not for extended/uncertain outages." },
-  { id:"coffeemaker", name:"Coffee maker", cupsMode:true, whPerCup:15, tag:"nice", defaultChecked:false, station:"kitchen", note:"Brewing is a short burst, not a continuous draw - estimated ~15 Wh per cup for a standard drip machine (rough estimate; tell me your model's wattage/brew time for a more accurate number). Counted as a one-time hit against that station's battery, not an ongoing load." }
+  { id:"coffeemaker", name:"Coffee maker (pod/Keurig-style)", cupsMode:true, whPerCup:35, tag:"nice", defaultChecked:false, station:"kitchen", note:"Brewing is a short burst, not a continuous draw - ~35 Wh per cup for a pod machine (fast flash-heater, but pays the heating overhead every single cup since there's no shared pot). Counted as a one-time hit against that station's battery, not an ongoing load." }
 ];
 
 // ---------- CUSTOM DEVICES (future purchases, added from the UI) ----------
@@ -1457,6 +1457,8 @@ function makeApplianceRowEl(a) {
   const removeBtn = a.custom ? `<button class="remove-item-btn" onclick="removeCustomAppliance('${a.id}')" aria-label="Remove">&times;</button>` : '';
   const wattsCell = a.cupsMode
     ? `Cups: <input type="number" class="qty-input" id="cups-${a.id}" value="0" min="0" max="24" onchange="updateOutage()">`
+    : a.minutesMode
+    ? `Minutes/day: <input type="number" class="qty-input" id="minutes-${a.id}" value="0" min="0" max="180" onchange="updateOutage()">`
     : `${a.watts} W`;
   div.innerHTML = `
     <div class="item-left">
@@ -1638,6 +1640,11 @@ function updateOutage() {
         const cupsEl = document.getElementById('cups-' + a.id);
         const cups = cupsEl ? Math.max(0, parseInt(cupsEl.value || '0', 10)) : 0;
         stationOneTimeWh[stationId] = (stationOneTimeWh[stationId] || 0) + cups * (a.whPerCup || 0);
+      } else if (a.minutesMode) {
+        // one-time burst energy (e.g. microwave) - real draw only while actively running, not continuous
+        const minutesEl = document.getElementById('minutes-' + a.id);
+        const minutes = minutesEl ? Math.max(0, parseFloat(minutesEl.value || '0')) : 0;
+        stationOneTimeWh[stationId] = (stationOneTimeWh[stationId] || 0) + (minutes / 60) * (a.runningWatts || 0);
       } else {
         stationW[stationId] = (stationW[stationId] || 0) + a.watts;
         stationAppliances[stationId].push(a);
@@ -1714,7 +1721,7 @@ function updateOutage() {
     const usableWh = Math.max(0, wh * 0.9 - oneTimeWh);
 
     if (oneTimeWh > 0) {
-      suggestionHtml += `<div class="note" style="margin-bottom:6px;">\u2615 <strong>${s.name}</strong>: reserves ~${Math.round(oneTimeWh)} Wh up front for coffee brewing (one-time, not counted in the ongoing load above).</div>`;
+      suggestionHtml += `<div class="note" style="margin-bottom:6px;">\u26A1 <strong>${s.name}</strong>: reserves ~${Math.round(oneTimeWh)} Wh up front for short-burst devices (coffee, microwave, etc. - one-time, not counted in the ongoing load above).</div>`;
     }
 
     let hoursStr, statusColor, hoursVal = null;
