@@ -859,8 +859,8 @@ const EGO_BATTERY_SIZES = [
 // involved, and they can't run on the EcoFlow batteries. Each one uses its
 // own battery, independent of whatever's powering the EGO Inverter above.
 const EGO_DIRECT_DEVICES = [
-  { id:"egofan-small", name:"EGO Fan (small)", watts:45, note:"Estimated wattage - tell me the actual model/spec and I'll swap in the real number." },
-  { id:"egofan-large", name:"EGO Fan (large)", watts:75, note:"Estimated wattage - tell me the actual model/spec and I'll swap in the real number." }
+  { id:"egofan-small", name:"EGO Fan (small)", watts:6, note:"Based on your real heat-wave use: ran almost 24 hours on low speed on a single 2.5Ah (140Wh) battery, which works out to ~6W actual draw at low speed. Medium/high speed will drain faster than this estimate - let me know if you want separate numbers per speed." },
+  { id:"egofan-large", name:"EGO Fan (large)", watts:6, note:"Based on your real heat-wave use: ran almost 24 hours on low speed on a single 2.5Ah (140Wh) battery, which works out to ~6W actual draw at low speed. Medium/high speed will drain faster than this estimate - let me know if you want separate numbers per speed." }
 ];
 
 const APPLIANCES = [
