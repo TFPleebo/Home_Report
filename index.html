@@ -2078,7 +2078,10 @@ function loadCurrentWeather() {
               '&daily=temperature_2m_max,temperature_2m_min&forecast_days=16' +
               '&temperature_unit=fahrenheit&timezone=auto';
 
-  fetch(url).then(r => r.json()).then(data => {
+  const weatherController = new AbortController();
+  const weatherTimeout = setTimeout(() => weatherController.abort(), 8000);
+
+  fetch(url, { signal: weatherController.signal }).then(r => { clearTimeout(weatherTimeout); return r.json(); }).then(data => {
     const cur = data && data.current;
     if (!cur || typeof cur.temperature_2m !== 'number') throw new Error('bad response');
     const rawT = Math.round(cur.temperature_2m), rawH = Math.round(cur.relative_humidity_2m);
@@ -2112,6 +2115,7 @@ function loadCurrentWeather() {
     renderTodaysPriceEstimate(rawH);
     renderMonthlyBillEstimate();
   }).catch(() => {
+    clearTimeout(weatherTimeout);
     if (note) note.innerText = 'Couldn\'t reach live weather right now — showing the default 45°F / 72% scenario instead. Move the sliders to explore other conditions.';
     if (outsideTile) {
       outsideTile.innerHTML = `
