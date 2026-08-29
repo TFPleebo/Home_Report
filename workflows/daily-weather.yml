@@ -1,0 +1,55 @@
+name: Daily weather pull & dashboard rebuild
+
+on:
+  schedule:
+    # 11:15 UTC = 7:15am EDT / 6:15am EST. GitHub cron is always UTC.
+    - cron: "15 11 * * *"
+  workflow_dispatch:        # <- the "Run workflow" button (works from a phone browser)
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-weather
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Fetch missing weather days
+        run: python3 fetch_weather.py --backfill
+
+      - name: Rebuild master log
+        run: python3 merge.py
+
+      - name: Refresh dashboard data
+        run: python3 update_dashboard_data.py
+
+      - name: Stage published site
+        run: |
+          cp house_power_dashboard.html index.html
+          for f in site/*; do
+            case "$(basename "$f")" in
+              index.html|README.md) ;;    # dashboard wins; site README is not the repo README
+              *) cp "$f" "$(basename "$f")" ;;
+            esac
+          done
+
+      - name: Commit & push
+        run: |
+          git config user.name  "House Power Bot"
+          git config user.email "housepower@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to publish."
+          else
+            git commit -m "Daily refresh $(date -u +%Y-%m-%d)"
+            git push
+          fi
