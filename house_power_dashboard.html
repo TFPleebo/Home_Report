@@ -1,0 +1,2230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>House Power</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="House Power">
+<meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+  :root {
+    color-scheme: light dark;
+    /* iOS system palette — light */
+    --tint: #007AFF;
+    --tint-bg: rgba(0,122,255,0.13);
+    --bg: #F2F2F7;
+    --surface: #FFFFFF;
+    --surface-solid: #FFFFFF;
+    --tile-bg: #F2F2F7;
+    --ink: #000000;
+    --sub: #8E8E93;
+    --line: rgba(60,60,67,0.18);
+    --hairline: rgba(60,60,67,0.29);
+    --track: rgba(120,120,128,0.2);
+    --good: #34C759;
+    --warn: #FF9500;
+    --bad: #FF3B30;
+    --neutral: #AEAEB2;
+    --warn-bg: rgba(255,149,0,0.12);
+    --bad-bg: rgba(255,59,48,0.12);
+    --card-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 8px 24px -12px rgba(0,0,0,0.10);
+    --chart-grid: rgba(60,60,67,0.14);
+    --chart-grid-strong: rgba(60,60,67,0.34);
+    --chart-text: #8E8E93;
+    --chart-line: #007AFF;
+    --chart-soft: rgba(0,122,255,0.60);
+    --chart-strong: #3A3A3C;
+    /* legacy aliases */
+    --accent: var(--tint); --accent-deep: var(--tint); --accent-soft: var(--chart-soft);
+    --ice: #F2F2F7; --steel: var(--tint); --steel-dark: var(--ink); --silver: #C7C7CC; --white: var(--bg);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --tint: #0A84FF;
+      --tint-bg: rgba(10,132,255,0.20);
+      --bg: #000000;
+      --surface: #1C1C1E;
+      --surface-solid: #2C2C2E;
+      --tile-bg: #2C2C2E;
+      --ink: #FFFFFF;
+      --sub: #98989F;
+      --line: rgba(235,235,245,0.14);
+      --hairline: rgba(235,235,245,0.22);
+      --track: rgba(120,120,128,0.36);
+      --good: #30D158;
+      --warn: #FF9F0A;
+      --bad: #FF453A;
+      --neutral: #78787D;
+      --warn-bg: rgba(255,159,10,0.16);
+      --bad-bg: rgba(255,69,58,0.16);
+      --card-shadow: none;
+      --chart-grid: rgba(235,235,245,0.12);
+      --chart-grid-strong: rgba(235,235,245,0.34);
+      --chart-text: #98989F;
+      --chart-line: #0A84FF;
+      --chart-soft: rgba(10,132,255,0.65);
+      --chart-strong: #EBEBF5;
+      --ice: #1C1C1E;
+    }
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", system-ui, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    padding: 12px 16px calc(118px + env(safe-area-inset-bottom, 0px));
+    -webkit-font-smoothing: antialiased;
+    font-size: 16px;
+  }
+  .wrap { max-width: 680px; margin: 0 auto; }
+  .app-header { padding: 14px 4px 4px; }
+  .nav-compact {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 90;
+    padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 11px;
+    text-align: center; font-size: 16px; font-weight: 650; color: var(--ink);
+    background: rgba(249,249,249,0.80);
+    -webkit-backdrop-filter: blur(24px) saturate(180%); backdrop-filter: blur(24px) saturate(180%);
+    border-bottom: 0.5px solid var(--hairline);
+    opacity: 0; transform: translateY(-10px); pointer-events: none;
+    transition: opacity 0.22s ease, transform 0.22s ease;
+  }
+  .nav-compact.visible { opacity: 1; transform: none; }
+  @media (prefers-color-scheme: dark) { .nav-compact { background: rgba(18,18,20,0.80); } }
+  .eyebrow {
+    font-size: 13px; font-weight: 700; color: var(--sub);
+    text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 2px;
+  }
+  h1 {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
+    font-weight: 800; font-size: 34px; margin: 0 0 12px 0; color: var(--ink);
+    letter-spacing: -0.4px; line-height: 1.08;
+  }
+  .subtitle { display: none; }
+
+  /* ---- Bottom tab bar (liquid glass) ---- */
+  .tabs {
+    position: fixed; left: 50%; transform: translateX(-50%);
+    bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+    width: min(430px, calc(100% - 28px));
+    z-index: 100;
+    display: flex; justify-content: space-around; align-items: stretch;
+    padding: 7px; border-radius: 34px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.52), rgba(255,255,255,0.28));
+    -webkit-backdrop-filter: blur(30px) saturate(200%); backdrop-filter: blur(30px) saturate(200%);
+    border: 0.5px solid rgba(255,255,255,0.62);
+    box-shadow:
+      0 16px 44px -10px rgba(0,0,0,0.30),
+      inset 0 1px 0 rgba(255,255,255,0.72),
+      inset 0 -1px 1px rgba(0,0,0,0.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    .tabs {
+      background: linear-gradient(180deg, rgba(46,46,50,0.58), rgba(24,24,28,0.46));
+      border-color: rgba(255,255,255,0.15);
+      box-shadow:
+        0 16px 44px -10px rgba(0,0,0,0.62),
+        inset 0 1px 0 rgba(255,255,255,0.15),
+        inset 0 -1px 1px rgba(0,0,0,0.32);
+    }
+  }
+  .tab-btn {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    flex: 1; padding: 7px 6px; border: none; background: none;
+    color: rgba(60,60,67,0.72); font-family: inherit; font-size: 10.5px; font-weight: 600;
+    letter-spacing: 0.01em; cursor: pointer; transition: color 0.18s ease, transform 0.12s ease;
+    border-radius: 26px;
+  }
+  @media (prefers-color-scheme: dark) { .tab-btn { color: rgba(235,235,245,0.62); } }
+  .tab-btn svg { width: 25px; height: 25px; display: block; }
+  .tab-btn { position: relative; z-index: 1; }
+  .tab-btn.active { color: var(--tint); }
+  .tab-indicator {
+    position: absolute; top: 7px; left: 7px;
+    width: calc((100% - 14px) / 3); height: calc(100% - 14px);
+    border-radius: 27px; z-index: 0;
+    background: linear-gradient(180deg, rgba(255,255,255,0.94), rgba(255,255,255,0.58));
+    box-shadow: 0 3px 10px -2px rgba(0,0,0,0.20), inset 0 1px 0 rgba(255,255,255,0.95), inset 0 -1px 1px rgba(0,0,0,0.04);
+    transition: transform 0.45s cubic-bezier(0.32, 1.4, 0.45, 1);
+  }
+  @media (prefers-color-scheme: dark) {
+    .tab-indicator {
+      background: linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0.07));
+      box-shadow: 0 3px 12px -2px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.24);
+    }
+  }
+  @keyframes iconpop { 0% { transform: scale(1); } 45% { transform: scale(1.22) translateY(-1px); } 100% { transform: scale(1); } }
+  .tab-btn.active svg { animation: iconpop 0.42s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  .tab-btn:active { transform: scale(0.93); }
+  .tab-btn.active svg path[d^="M5.2"] { fill: currentColor; fill-opacity: 0.16; }
+  .tab-btn.active svg circle { fill: currentColor; }
+
+  /* ---- Cards (iOS grouped inset) ---- */
+  .card {
+    background: var(--surface); border: none; border-radius: 20px;
+    padding: 16px 18px; margin-bottom: 14px; box-shadow: var(--card-shadow);
+    animation: rise 0.4s cubic-bezier(0.25, 1, 0.4, 1) both;
+  }
+  @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  #tab-today .card:nth-of-type(1) { animation-delay: 0.03s; }
+  #tab-today .card:nth-of-type(2) { animation-delay: 0.08s; }
+  #tab-today .card:nth-of-type(3) { animation-delay: 0.13s; }
+  #tab-today .card:nth-of-type(4) { animation-delay: 0.18s; }
+  #tab-today .card:nth-of-type(5) { animation-delay: 0.23s; }
+  @keyframes barrise { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+  svg rect.bar.animate { transform-box: fill-box; transform-origin: bottom; animation: barrise 0.55s cubic-bezier(0.25, 1, 0.4, 1) both; }
+  .card h2 {
+    font-size: 13px; font-weight: 700; margin: 0 0 12px 0; color: var(--sub);
+    text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .card-title-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    margin-bottom: 12px;
+  }
+  .card-title-row h2 { margin-bottom: 0; }
+  .card-hero .big-number {
+    font-family: ui-rounded, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    font-size: 52px; font-weight: 800; letter-spacing: -0.5px; line-height: 1;
+    color: var(--ink);
+  }
+
+  .row { margin-bottom: 14px; }
+  label { display: block; font-size: 14px; color: var(--sub); margin-bottom: 8px; }
+  .val { font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+
+  /* ---- iOS slider ---- */
+  input[type=range] {
+    width: 100%; -webkit-appearance: none; appearance: none; height: 4px; border-radius: 2px;
+    background: var(--track); outline: none; margin: 10px 0;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 27px; height: 27px; border-radius: 50%;
+    background: #FFFFFF; border: none;
+    box-shadow: 0 0.5px 2px rgba(0,0,0,0.18), 0 3px 8px rgba(0,0,0,0.22);
+    cursor: pointer; transition: transform 0.12s ease;
+  }
+  input[type=range]::-webkit-slider-thumb:active { transform: scale(1.06); }
+
+  input[type=number] {
+    width: 76px; padding: 6px 8px; border-radius: 10px; border: none;
+    background: var(--tile-bg); color: var(--ink); font-family: inherit; font-size: 15px;
+    font-variant-numeric: tabular-nums;
+  }
+  input[type=text] {
+    width: 100%; padding: 8px 10px; border-radius: 10px; border: none;
+    background: var(--tile-bg); color: var(--ink); font-family: inherit; font-size: 15px;
+    box-sizing: border-box;
+  }
+  select {
+    border-radius: 10px; border: none; background: var(--tile-bg);
+    color: var(--ink); padding: 6px 8px; font-family: inherit; font-size: 14px;
+  }
+  .add-item-form {
+    margin-top: 10px; padding: 12px; border-radius: 14px;
+    border: 1px dashed var(--chart-grid);
+  }
+  .add-item-form select { width: 100%; box-sizing: border-box; }
+  .remove-item-btn {
+    background: none; border: none; color: var(--bad); font-size: 18px; line-height: 1;
+    padding: 0 4px; cursor: pointer;
+  }
+
+  .big-number {
+    font-family: ui-rounded, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    font-size: 30px; font-weight: 800; color: var(--ink);
+    letter-spacing: -0.3px; font-variant-numeric: tabular-nums;
+    transition: all 0.25s ease;
+  }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .result-box {
+    background: var(--tile-bg); border-radius: 14px; padding: 12px 14px; margin-top: 6px; border: none;
+  }
+  .note { font-size: 13px; color: var(--sub); margin-top: 6px; line-height: 1.45; }
+  .warning {
+    background: var(--warn-bg); border: none; color: var(--ink);
+    border-radius: 14px; padding: 11px 14px; font-size: 13.5px; margin-top: 8px; line-height: 1.45;
+  }
+  .danger {
+    background: var(--bad-bg); border: none; color: var(--ink);
+    border-radius: 14px; padding: 11px 14px; font-size: 13.5px; margin-top: 8px; line-height: 1.45;
+  }
+
+  /* ---- List rows ---- */
+  .item {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    padding: 11px 0; border-bottom: 0.5px solid var(--line); font-size: 15px;
+  }
+  .item:last-child { border-bottom: none; }
+  .item-left { display: flex; align-items: center; gap: 10px; }
+
+  /* ---- iOS switch (replaces checkboxes) ---- */
+  input[type=checkbox] {
+    -webkit-appearance: none; appearance: none; width: 44px; height: 27px; border-radius: 15px;
+    background: var(--track); position: relative; cursor: pointer; flex-shrink: 0; margin: 0;
+    transition: background 0.22s ease; vertical-align: middle;
+  }
+  input[type=checkbox]::after {
+    content: ""; position: absolute; width: 23px; height: 23px; border-radius: 50%;
+    top: 2px; left: 2px; background: #FFFFFF;
+    box-shadow: 0 0.5px 2px rgba(0,0,0,0.2), 0 2px 6px rgba(0,0,0,0.15);
+    transition: left 0.22s cubic-bezier(0.3, 0.9, 0.5, 1.15);
+  }
+  input[type=checkbox]:checked { background: var(--good); }
+  input[type=checkbox]:checked::after { left: 19px; }
+
+  .info-btn {
+    position: relative;
+    width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--tint);
+    background: none; color: var(--tint); font-size: 12px; font-weight: 700;
+    font-family: Georgia, 'Times New Roman', serif; font-style: italic;
+    line-height: 1; cursor: pointer; flex-shrink: 0; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .info-btn::before { content: ""; position: absolute; inset: -11px; }
+  .info-btn:active { transform: scale(0.9); }
+  .appliance-note { animation: rise 0.25s ease both; }
+  .tag { font-size: 10.5px; padding: 3px 9px; border-radius: 20px; color: #fff; font-weight: 700; letter-spacing: 0.02em; }
+  .tag.essential { background: var(--good); }
+  .tag.nice { background: var(--warn); }
+  .tag.avoid { background: var(--bad); }
+  .watts { color: var(--sub); font-size: 13px; min-width: 60px; text-align: right; font-variant-numeric: tabular-nums; }
+  .qty-input { width: 46px; padding: 4px 6px; border-radius: 8px; border: none; margin-left: 6px; background: var(--tile-bg); color: var(--ink); }
+  .charge-input { width: 50px; padding: 4px 6px; border-radius: 8px; border: none; margin-left: 6px; background: var(--tile-bg); color: var(--ink); }
+
+  /* ---- Tinted buttons ---- */
+  .preset-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+  .preset-btn {
+    padding: 12px 17px; border-radius: 22px; border: none; min-height: 44px;
+    background: var(--tint-bg); color: var(--tint); font-size: 14px; font-weight: 600;
+    font-family: inherit; cursor: pointer; transition: transform 0.12s ease, filter 0.15s ease;
+  }
+  .preset-btn:hover { filter: brightness(1.06); }
+  .preset-btn:active { transform: scale(0.95); }
+
+  footer { text-align: center; color: var(--sub); font-size: 12px; margin: 24px 0 8px; }
+  .chart-wrap { margin-top: 6px; }
+  .battery-gauge-outer {
+    width: 100%; height: 26px; background: var(--track); border-radius: 20px; overflow: hidden;
+    border: none; position: relative;
+  }
+  .battery-gauge-fill { height: 100%; border-radius: 20px; transition: width 0.4s ease, background 0.4s ease; }
+  .goal-marker { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--ink); opacity: 0.6; }
+  .goal-label { position: absolute; top: -18px; font-size: 10px; color: var(--sub); transform: translateX(-50%); }
+  .legend-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 4px; }
+
+  .all-current {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 600; color: var(--sub);
+  }
+  .all-current .dot { width: 7px; height: 7px; border-radius: 50%; }
+  .confidence-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 2px 0 12px; }
+  .confidence-badge {
+    display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600;
+    padding: 6px 12px; border-radius: 20px; border: none; background: var(--surface);
+    color: var(--ink); box-shadow: var(--card-shadow);
+  }
+  .confidence-badge .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .confidence-badge .sub { font-weight: 400; color: var(--sub); }
+
+  .mini-table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+  .mini-table th, .mini-table td { padding: 9px 8px; text-align: right; border-bottom: 0.5px solid var(--line); }
+  .mini-table th:first-child, .mini-table td:first-child { text-align: left; }
+  .mini-table th { color: var(--sub); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .mini-table tr:last-child td { border-bottom: none; }
+
+  .tracker-period { padding: 12px 0; border-bottom: 0.5px solid var(--line); }
+  .tracker-period:first-child { padding-top: 2px; }
+  .tracker-period:last-child { border-bottom: none; padding-bottom: 2px; }
+  .tp-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; font-size: 14px; font-weight: 650; font-variant-numeric: tabular-nums; }
+  .tp-sample { font-size: 11.5px; font-weight: 600; color: var(--sub); white-space: nowrap; }
+  .tp-stats { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 8px; font-size: 14.5px; font-weight: 650; font-variant-numeric: tabular-nums; }
+  .tp-label { font-size: 10.5px; font-weight: 700; color: var(--sub); text-transform: uppercase; letter-spacing: 0.04em; margin-right: 3px; }
+  #seasonalCalendar, #stationBreakdown { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .room-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .room-tile {
+    background: var(--tile-bg); border-radius: 16px; padding: 12px 14px; border: none;
+  }
+  .room-tile .room-name { font-size: 12px; color: var(--sub); font-weight: 600; display: flex; align-items: center; gap: 6px; }
+  .room-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .room-tile .room-temp {
+    font-family: ui-rounded, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    font-size: 24px; font-weight: 700; color: var(--ink); letter-spacing: -0.3px;
+    font-variant-numeric: tabular-nums; margin-top: 3px;
+  }
+  .room-tile .room-hum { font-size: 12px; color: var(--sub); margin-top: 1px; }
+
+  .chart-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .chart-range { font-size: 12px; font-weight: 650; color: var(--sub); letter-spacing: 0.02em; }
+  .chev {
+    position: relative; width: 32px; height: 32px; border-radius: 50%; border: none;
+    background: var(--tint-bg); color: var(--tint); font-size: 20px; font-weight: 700;
+    line-height: 1; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+    padding: 0 0 2px 0; transition: opacity 0.15s ease, transform 0.12s ease;
+  }
+  .chev::before { content: ""; position: absolute; inset: -6px; }
+  .chev:active { transform: scale(0.9); }
+  .chev:disabled { opacity: 0.3; cursor: default; }
+  .day-detail {
+    background: var(--tile-bg); border-radius: 14px; padding: 11px 13px; margin-top: 8px;
+    font-size: 14px; animation: rise 0.25s ease both;
+  }
+  svg rect.tapzone { cursor: pointer; }
+  .hero-row { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+  .hero-date { font-size: 15px; color: var(--sub); font-weight: 600; }
+  .delta-line { font-size: 15px; font-weight: 650; margin-top: 10px; }
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+  .stat-box { background: var(--tile-bg); border-radius: 16px; padding: 12px 14px; border: none; }
+  .stat-box .stat-label { font-size: 11px; color: var(--sub); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+  .stat-box .stat-value {
+    font-family: ui-rounded, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    font-size: 26px; font-weight: 800; color: var(--ink); letter-spacing: -0.3px;
+    font-variant-numeric: tabular-nums; margin-top: 3px;
+  }
+  .stat-box .stat-sub { font-size: 12px; color: var(--sub); margin-top: 1px; }
+
+  svg text { font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
+  button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--tint); outline-offset: 2px; }
+  @media (min-width: 1000px) { .wrap { max-width: 760px; } }
+  @media (max-width: 420px) {
+    body { padding-left: 12px; padding-right: 12px; }
+    .card { padding: 14px 16px; border-radius: 18px; }
+    .card-hero .big-number { font-size: 44px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+    html { scroll-behavior: auto; }
+  }
+</style>
+</head>
+<body>
+<div class="nav-compact" id="navCompact">House Power</div>
+<div class="wrap">
+  <header class="app-header">
+    <div class="eyebrow" id="eyebrowDate"></div>
+    <h1>House Power</h1>
+  </header>
+
+  <div class="confidence-row" id="dataStalenessRow" style="margin-bottom:10px;"></div>
+
+  <div class="tabs">
+    <div class="tab-indicator" id="tabIndicator"></div>
+    <button class="tab-btn active" onclick="showTab('today')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.8 12 3.2l9 7.6"/><path d="M5.2 9.6V20a1 1 0 0 0 1 1h4v-6h3.6v6h4a1 1 0 0 0 1-1V9.6"/></svg>
+      <span>Today</span>
+    </button>
+    <button class="tab-btn" onclick="showTab('sim')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><line x1="3.5" y1="6.5" x2="20.5" y2="6.5"/><line x1="3.5" y1="12" x2="20.5" y2="12"/><line x1="3.5" y1="17.5" x2="20.5" y2="17.5"/><circle cx="9" cy="6.5" r="2.3" fill="var(--bg)"/><circle cx="15.5" cy="12" r="2.3" fill="var(--bg)"/><circle cx="7" cy="17.5" r="2.3" fill="var(--bg)"/></svg>
+      <span>Simulator</span>
+    </button>
+    <button class="tab-btn" onclick="showTab('outage')">
+      <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M13.4 2.2 4.4 13.5a.6.6 0 0 0 .47.98h5.13l-1.2 7.02c-.1.6.66.94 1.03.46l9-11.3a.6.6 0 0 0-.47-.98h-5.13l1.2-7.02c.1-.6-.66-.94-1.03-.46z"/></svg>
+      <span>Outage</span>
+    </button>
+  </div>
+
+  <!-- ============ TODAY ============ -->
+  <div id="tab-today">
+
+    <div id="alertStrip"></div>
+
+    <div class="card card-hero">
+      <div class="card-title-row"><h2>Latest Metered Day</h2><span class="info-btn" onclick="toggleNote('priceestimate')" title="More info">i</span></div>
+      <div class="note" id="note-priceestimate" style="display:none; margin-bottom:8px;">Today's estimate uses the average of today's forecast high/low fed into the same cost model used everywhere else on this page. Monthly estimate adds up actual metered days so far this month, plus modeled cost for the rest of the month — using the forecast for days it covers (up to ~16 days out) and this month's historical average temperature beyond that. Both are estimates, not bills — your real AEP/gas billing will differ.</div>
+      <div id="todayHero"></div>
+      <div class="stat-grid" style="margin-top:14px;">
+        <div class="stat-box">
+          <div class="stat-label">Today's Price Estimate</div>
+          <div class="stat-value" id="todayEstimate">$0.00</div>
+          <div class="stat-sub" id="todayEstimateSub">Loading forecast…</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Monthly Bill Estimate</div>
+          <div class="stat-value" id="monthEstimate">$0</div>
+          <div class="stat-sub" id="monthEstimateSub">Loading forecast…</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title-row"><h2>Right Now In Your House</h2><span class="info-btn" onclick="toggleNote('roomsnapshot')" title="More info">i</span></div>
+      <div class="note" id="note-roomsnapshot" style="margin-bottom:8px; display:none;">Last real reading from each sensor, straight from your Shortcut — not a prediction.</div>
+      <div id="roomSnapshot"></div>
+      <div class="note" id="roomSnapshotAsOf" style="margin-top:8px;"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title-row"><h2>Metered Days</h2><span class="info-btn" onclick="toggleNote('metereddays')" title="More info">i</span></div>
+      <div class="note" id="note-metereddays" style="margin-bottom:8px; display:none;">Bars = actual cost per day. The tick and shaded band = what the model expected for that day's weather, ± its typical miss — days landing inside the band are normal; days far outside are worth a look. Tap a bar for details; swipe or use the arrows to page through history.</div>
+      <div class="chart-nav">
+        <button class="chev" id="chevOlder" onclick="shiftRecent(1)" aria-label="Older days">&#8249;</button>
+        <span class="chart-range" id="recentRange"></span>
+        <button class="chev" id="chevNewer" onclick="shiftRecent(-1)" aria-label="Newer days">&#8250;</button>
+      </div>
+      <svg id="recentChart" viewBox="0 0 700 240" style="width:100%; height:auto;"></svg>
+      <div id="recentDetail"></div>
+    </div>
+
+    <div class="card">
+      <h2>This Month So Far</h2>
+      <div id="monthSoFar"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title-row"><h2 id="testCardTitle">Recent Performance</h2><span class="info-btn" onclick="toggleNote('recentperformance')" title="More info">i</span></div>
+      <div class="note" id="note-recentperformance" style="margin-bottom:8px; display:none;">Three views of the same actual-vs-model comparison: a live rolling average (last 14 days), a running total since the last settings change, and the single most surprising day recently. Full period-by-period history lives in the Simulator tab → Settings &amp; Test Tracker.</div>
+      <div id="testStatus"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title-row"><h2>Monthly Bill Estimate — Track Record</h2><span class="info-btn" onclick="toggleNote('monthlyaccuracy')" title="More info">i</span></div>
+      <div class="note" id="note-monthlyaccuracy" style="margin-bottom:8px; display:none;">Electric only (gas is billed monthly, not metered day-by-day, so there's no real daily actual to compare against). Each bar is that month's real average $/day from AEP; the tick is what the same cost model would have predicted using that month's real weather — a retroactive check on the same model behind Today's/Monthly estimates above.</div>
+      <svg id="monthlyAccuracyChart" viewBox="0 0 700 220" style="width:100%; height:auto;"></svg>
+      <div class="note">
+        <span class="legend-dot" style="background:var(--chart-soft);"></span>Actual $/day &nbsp;
+        <span class="legend-dot" style="background:var(--chart-strong);"></span>Model $/day &nbsp;
+        Tap a bar for details.
+      </div>
+      <div id="monthlyAccuracyDetail"></div>
+    </div>
+  </div>
+
+  <!-- ============ SCENARIO SIMULATOR ============ -->
+  <div id="tab-sim" style="display:none;">
+
+    <div class="card">
+      <h2>Quick presets</h2>
+      <div class="preset-row">
+        <button class="preset-btn" onclick="setTemp(85)">☀️ Heat Wave (85°F)</button>
+        <button class="preset-btn" onclick="setTemp(55)">🍃 Mild Day (55°F)</button>
+        <button class="preset-btn" onclick="setTemp(20)">🌨️ Cold Snap (20°F)</button>
+        <button class="preset-btn" onclick="setTemp(5)">🧊 Deep Freeze (5°F)</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title-row"><h2>Outdoor Temperature Scenario</h2><span class="info-btn" onclick="toggleNote('outdoorscenario')" title="More info">i</span></div>
+      <div class="note" id="note-outdoorscenario" style="margin-bottom:8px; display:none;">Real data check: on 320 real cooling-season days, humidity had a statistically significant effect on electric cost even after accounting for temperature (p&lt;0.001) — a muggy 70°F day genuinely costs more to cool than a dry 70°F day. This home's actual humidity ranged 43%-96%, averaging ~72%. Effect only applies above the balance point, where the AC is doing real work.<br><br>The chart below plots cost across temperatures — the dashed line marks the current balance point (refit nightly), with cooling costs rising to its right and heating costs to its left.</div>
+      <div class="note" id="liveWeatherNote" style="margin-bottom:10px;">Loading today's actual weather…</div>
+      <div class="row">
+        <label>Average outdoor temperature: <span class="val" id="tempLabel">45°F</span></label>
+        <input type="range" id="tempSlider" min="-10" max="100" value="45" step="1" oninput="updateSim()">
+      </div>
+      <div class="row">
+        <label>Humidity (relative): <span class="val" id="humidityLabel">72%</span> <span class="note" id="humidityNote" style="display:inline;"></span></label>
+        <input type="range" id="humiditySlider" min="30" max="100" value="72" step="1" oninput="updateSim()">
+      </div>
+      <div class="grid2">
+        <div class="result-box">
+          <div class="note">Electric</div>
+          <div class="big-number" id="elecCost">$0.00</div>
+          <div class="note" id="elecKwh"></div>
+        </div>
+        <div class="result-box">
+          <div class="note">Gas</div>
+          <div class="big-number" id="gasCost">$0.00</div>
+          <div class="note">From monthly billing history</div>
+        </div>
+      </div>
+      <div class="result-box" style="margin-top:10px;">
+        <div class="note">Total home energy, per day</div>
+        <div class="big-number" id="totalCost">$0.00</div>
+        <div class="note" id="monthlyProjection"></div>
+      </div>
+      <div class="confidence-row">
+        <span class="confidence-badge" id="elecConfidenceBadge"></span>
+        <span class="confidence-badge" id="gasConfidenceBadge"></span>
+      </div>
+      <div id="extrapWarning"></div>
+
+      <div class="chart-wrap">
+        <svg id="costChart" viewBox="0 0 700 220" style="width:100%; height:auto;"></svg>
+        <div class="note">
+          <span class="legend-dot" style="background:var(--chart-line);"></span>Total daily cost &nbsp;
+          <span class="legend-dot" style="background:var(--bad);"></span>Your current slider position
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title-row"><h2>Hypothetical Setpoint Adjustment</h2><span class="info-btn" onclick="toggleNote('setpointscope')" title="More info">i</span></div>
+      <div class="note" id="note-setpointscope" style="margin-bottom:8px; display:none;">
+        Models your <strong>main/central thermostat</strong> only (the electric AC + gas furnace both key off this setpoint). The window AC is tracked separately, with its own real measured wattage — see the appliance calculator below and the Outage Planner.
+        <br><br>
+        <strong>Rough industry rule of thumb (~3% energy change per degree) — not derived from your own data.</strong>
+        Your real 71→72°F central AC experiment actually showed a cost <em>increase</em>, not a decrease, so treat this as a ballpark exploration tool, not a guaranteed prediction. Also note: gas only reacts to this slider in winter (below the gas balance point) — in warm weather nearly all of the change you see below comes from electric cooling.
+      </div>
+      <div class="row">
+        <label>Shift cooling/heating setpoint by: <span class="val" id="deltaLabel">0°F</span></label>
+        <input type="range" id="deltaSlider" min="-5" max="5" value="0" step="1" oninput="updateSim()">
+      </div>
+      <div class="result-box" style="margin-top:10px;">
+        <div class="note">Adjusted total, per day</div>
+        <div class="big-number" id="adjustedCost">$0.00</div>
+        <div class="note" id="deltaVsBase"></div>
+        <div class="note" id="deltaBreakdown" style="margin-top:6px;"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title-row"><h2>What Does This Appliance Cost?</h2><span class="info-btn" onclick="toggleNote('appliancerate')" title="More info">i</span></div>
+      <div class="note" id="note-appliancerate" style="margin-bottom:8px; display:none;">Uses your marginal rate only (17.06¢/kWh) — the ~$22.62/month fixed charge doesn't change based on any one appliance, so it's left out of this comparison.</div>
+      <div class="row">
+        <label>Appliance</label>
+        <select id="applianceSelect" onchange="updateApplianceCost()" style="width:100%; padding:8px;"></select>
+      </div>
+      <div class="row" id="customWattsRow" style="display:none;">
+        <label>Custom wattage</label>
+        <input type="number" id="customWatts" value="100" min="1" step="1" oninput="updateApplianceCost()"> W
+      </div>
+      <div class="row">
+        <label>Hours used per day: <span class="val" id="applianceHoursLabel">1.0</span> <span class="note" style="display:inline;">(e.g. 0.5 = 30 min, 0.17 ≈ 10 min)</span></label>
+        <input type="range" id="applianceHours" min="0" max="24" value="1" step="0.1" oninput="updateApplianceCost()">
+      </div>
+      <div class="grid2">
+        <div class="result-box">
+          <div class="note">Per day</div>
+          <div class="big-number" id="applianceDayCost">$0.00</div>
+          <div class="note" id="applianceKwhDay"></div>
+        </div>
+        <div class="result-box">
+          <div class="note">Per month (≈30.4 days)</div>
+          <div class="big-number" id="applianceMonthCost">$0.00</div>
+          <div class="note" id="applianceShareOfBill"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title-row"><h2>Model vs. Reality Check</h2><span class="info-btn" onclick="toggleNote('modelreality')" title="More info">i</span></div>
+      <div class="note" id="note-modelreality" style="margin-bottom:8px; display:none;">Every real day of metered electric usage (457 days, blue) plotted against the fitted model curve. Red dots are days since the 6/28 AC-settings change — watch whether they sit above or below the line. Snapshot as of the data through July 1, 2026 — ask to rebuild this as new AEP data comes in.</div>
+      <svg id="realityChart" viewBox="0 0 700 220" style="width:100%; height:auto;"></svg>
+      <div class="note">
+        <span class="legend-dot" style="background:var(--chart-line);"></span>Model curve &nbsp;
+        <span class="legend-dot" style="background:var(--chart-soft);"></span>Actual days (old settings) &nbsp;
+        <span class="legend-dot" style="background:var(--bad);"></span>Actual days (new settings, since 6/28)
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title-row"><h2>Settings &amp; Test Tracker</h2><span class="info-btn" onclick="toggleNote('settingstracker')" title="More info">i</span></div>
+      <div class="note" id="note-settingstracker" style="margin-bottom:8px; display:none;">Pulled straight from <code>data/settings_changelog.csv</code> — log any future change there (new date + description, no code needed) and it shows up here automatically. "Model" is the same weather-fit model used everywhere else in this dashboard, which was built almost entirely from pre-change days, so it stands in for "what the original baseline would have cost" for each period's actual weather.</div>
+      <div id="settingsTracker"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title-row"><h2>Seasonal Cost Calendar</h2><span class="info-btn" onclick="toggleNote('seasonalcalendar')" title="More info">i</span></div>
+      <div class="note" id="note-seasonalcalendar" style="margin-bottom:8px; display:none;">Real historical averages by calendar month (pooled across all years in the dataset) — a projected year at a glance, model prediction vs. what actually happened.</div>
+      <div id="seasonalCalendar"></div>
+    </div>
+
+    <div class="card">
+      <h2>What the model is built on</h2>
+      <div class="note" id="modelNotes"></div>
+    </div>
+  </div>
+
+  <!-- ============ OUTAGE POWER PLANNER ============ -->
+  <div id="tab-outage" style="display:none;">
+
+    <div class="card">
+      <h2>Quick presets</h2>
+      <div class="preset-row">
+        <button class="preset-btn" onclick="applyOutagePreset('short')">🔋 Short Outage — Fridge Only (Delta 3)</button>
+        <button class="preset-btn" onclick="applyOutagePreset('extended')">🔌 Extended Outage — 24hr Room Plan</button>
+        <button class="preset-btn" onclick="applyOutagePreset('storm')">⛈️ Storm — Maximize + Solar</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title-row"><h2>1. Batteries you'll deploy</h2><span class="info-btn" onclick="toggleNote('batterysetup')" title="More info">i</span></div>
+      <div class="note" id="note-batterysetup" style="margin-bottom:8px; display:none;">Set each battery's current charge if it's not sitting at 100% — the runtime estimate will use the real charge level, not an assumed full tank. Also set where each one is actually stationed — a battery can only power loads it's physically near, not the whole house at once.</div>
+      <div id="batteryList"></div>
+      <div class="add-item-form">
+        <div class="row" style="margin-bottom:6px;">
+          <label>New battery / power station name</label>
+          <input type="text" id="newBatteryName" placeholder="e.g. Jackery 1000 Plus">
+        </div>
+        <div class="row" style="margin-bottom:6px;">
+          <label>Capacity (Wh)</label>
+          <input type="number" id="newBatteryWh" min="1" step="1" placeholder="e.g. 1000">
+        </div>
+        <div class="row" style="margin-bottom:8px;">
+          <label>Stationed at</label>
+          <select id="newBatteryStation"></select>
+        </div>
+        <button class="preset-btn" onclick="addCustomBattery()">+ Add battery</button>
+      </div>
+      <div class="result-box" style="margin-top:10px;">
+        <div class="note">Combined capacity across all stations (informational only — see runtime-by-station below for what's actually usable)</div>
+        <div class="big-number" id="totalWh">0 Wh</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title-row"><h2>1b. EGO battery-powered devices</h2><span class="info-btn" onclick="toggleNote('egodirect')" title="More info">i</span></div>
+      <div class="note" id="note-egodirect" style="margin-bottom:8px; display:none;">These EGO tools plug straight into an EGO battery — no inverter needed, and they can't run on the EcoFlow batteries. Each device uses its own battery, independent of whatever's powering the EGO Inverter above, so you can run more than one at once if you own enough batteries.</div>
+      <div id="egoDirectList"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title-row"><h2>2. Solar charging (optional)</h2><span class="info-btn" onclick="toggleNote('solarassumption')" title="More info">i</span></div>
+      <div class="note" id="note-solarassumption" style="margin-bottom:8px; display:none;">Assumes ~65% real-world efficiency vs. the 400W rating (panel angle, clouds, charge-controller loss) — not the nameplate spec. This adds charge back in during the day rather than a one-time boost, so it matters most for outages longer than 24 hours.</div>
+      <div class="row" style="margin-bottom:8px;">
+        <label style="display:flex; align-items:center; gap:8px; margin-bottom:0;">
+          <input type="checkbox" id="chk-solar" onchange="updateOutage()"> Include EcoFlow 400W portable solar panel
+        </label>
+      </div>
+      <div class="row" id="solarHoursRow" style="display:none;">
+        <label>Usable sun hours per day: <span class="val" id="solarHoursLabel">5</span></label>
+        <input type="range" id="solarHours" min="0" max="10" value="5" step="0.5" oninput="updateOutage()">
+        <label style="font-size:0.78rem; color:var(--sub); margin-top:6px; display:block;">Charging which station's battery: <select id="station-solar" onchange="updateOutage()"></select></label>
+      </div>
+      <div class="note" id="solarContribution" style="margin-top:6px; font-weight:600;"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title-row"><h2>3. Loads you want to run</h2><span class="info-btn" onclick="toggleNote('loadstation')" title="More info">i</span></div>
+      <div class="note" id="note-loadstation" style="margin-bottom:8px; display:none;">Set where each load actually is — the runtime by station below only counts a load against battery capacity that's stationed in the same place.</div>
+      <div id="applianceList"></div>
+      <div class="add-item-form">
+        <div class="row" style="margin-bottom:6px;">
+          <label>New device name</label>
+          <input type="text" id="newApplianceName" placeholder="e.g. CPAP machine">
+        </div>
+        <div class="row" style="margin-bottom:6px;">
+          <label>Wattage</label>
+          <input type="number" id="newApplianceWatts" min="1" step="1" placeholder="e.g. 60">
+        </div>
+        <div class="row" style="margin-bottom:8px;">
+          <label>Located at</label>
+          <select id="newApplianceStation"></select>
+        </div>
+        <button class="preset-btn" onclick="addCustomAppliance()">+ Add device</button>
+      </div>
+      <div class="result-box" style="margin-top:10px;">
+        <div class="note">Combined load across all stations (informational only)</div>
+        <div class="big-number" id="totalLoadW">0 W</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title-row"><h2>Estimated runtime by station</h2><span class="info-btn" onclick="toggleNote('stationruntime')" title="More info">i</span></div>
+      <div class="note" id="note-stationruntime" style="margin-bottom:8px; display:none;">Each station can only run on the battery capacity actually stationed there — a fridge in the kitchen can't draw on a battery upstairs. This is the realistic view; the combined totals above assume everything could share power, which it can't. Also assumes ~10% inverter/conversion loss per station — real-world runtime varies with cycling, temperature, and inverter idle draw (your March outage test showed the fridge alone using less than the flat estimate).</div>
+      <div id="stationBreakdown"></div>
+      <div id="heaterWarning"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title-row"><h2>Need to hit a specific runtime? Get load-shedding suggestions</h2><span class="info-btn" onclick="toggleNote('suggestionsnote')" title="More info">i</span></div>
+      <div class="note" id="note-suggestionsnote" style="margin-bottom:8px; display:none;">Suggestions are per-station — dropping a load in the kitchen doesn't help the bedroom's runtime, so each constrained station gets its own advice.</div>
+      <div class="row">
+        <label>Target runtime: <span class="val" id="targetHoursLabel">24</span> hours</label>
+        <input type="range" id="targetHours" min="4" max="72" value="24" step="1" oninput="updateOutage()">
+      </div>
+      <div id="suggestionBox"></div>
+    </div>
+  </div>
+
+  <footer id="footerLine">Personal reference tool — not a substitute for real-time monitoring during an actual outage.</footer>
+</div>
+
+<script>
+// ---------- DATA LAYER ----------
+const ELECTRIC = {
+  fixedPerDay: 13.50/30.4,
+  rate: 0.1892,
+  balance: 45,
+  vertexKwh: 26.3,
+  coolSlope: 1.114,
+  heatSlope: 0.777,
+  observedMin: 3,
+  observedMax: 84,
+  // Humidity effect: fit as a 2nd regression term (kWh ~ temp + humidity) on 320 real
+  // cooling-season days. Statistically real (p=0.0007) and nearly uncorrelated with temp
+  // itself (r=0.10), so it's applied as an independent adjustment on the cooling side only.
+  humidityCoef: 0.147,      // extra kWh/day per +1 percentage point of relative humidity
+  humidityBaseline: 72,     // historical average RH on cooling days in this dataset (~72%)
+  humidityObservedMin: 43,
+  humidityObservedMax: 96
+};
+
+const GAS = {
+  floor: 2.21,
+  balance: 55,
+  slope: 0.1955,
+  observedMin: 20.3,
+  observedMax: 77.0
+};
+
+
+function getElectricConfidence(tempF) {
+  const idx = Math.floor((tempF - ELECTRIC_BIN_START) / ELECTRIC_BIN_SIZE);
+  const days = (idx >= 0 && idx < ELECTRIC_DAY_COUNTS.length) ? ELECTRIC_DAY_COUNTS[idx] : 0;
+  if (days >= 30) return { level:'high', color:'var(--good)', label:'High', sub:days + ' similar real days' };
+  if (days >= 10) return { level:'moderate', color:'var(--warn)', label:'Moderate', sub:days + ' similar real days' };
+  if (days >= 1) return { level:'low', color:'var(--bad)', label:'Low', sub:'only ' + days + ' similar day' + (days===1?'':'s') + ' observed' };
+  return { level:'none', color:'var(--neutral)', label:'Extrapolated', sub:'no real days at this temp' };
+}
+
+function getGasConfidence(tempF) {
+  // Gas is monthly billing data (23 periods total) - inherently coarser than electric's
+  // daily readings, so it's capped at "Moderate" even at its best - never claiming "High".
+  if (tempF >= GAS.observedMin && tempF <= GAS.observedMax) {
+    return { level:'moderate', color:'var(--warn)', label:'Moderate', sub:'estimated from 23 monthly bills' };
+  }
+  return { level:'none', color:'var(--neutral)', label:'Extrapolated', sub:'outside observed billing range' };
+}
+
+// ==HP_DATA_START==
+// Everything between these markers is regenerated by update_dashboard_data.py
+// from the CSV files in this folder. Do not hand-edit; run the script instead.
+// Last refreshed: 2026-08-28 10:01
+
+// Real observed-day counts per 5°F bin, from home_climate_log.csv (510 full metered days).
+const ELECTRIC_DAY_COUNTS = [0, 0, 2, 5, 8, 8, 12, 16, 23, 26, 32, 36, 30, 43, 52, 70, 83, 47, 17, 0, 0, 0];
+const ELECTRIC_BIN_START = -10, ELECTRIC_BIN_SIZE = 5;
+
+// Every real day with metered electric usage: [date, avgTempF, avgHumidityPct, actualKwh].
+const DAILY_RECORDS = [["2025-04-01", 40.6, 59.5, 11.51], ["2025-04-02", 52.9, 59.6, 13.6], ["2025-04-03", 64.9, 77.7, 19.0], ["2025-04-04", 53.1, 83.0, 21.52], ["2025-04-05", 60.2, 91.2, 18.06], ["2025-04-06", 41.7, 83.8, 20.22], ["2025-04-07", 41.3, 70.8, 21.44], ["2025-04-08", 31.8, 57.0, 27.2], ["2025-04-09", 37.4, 61.2, 40.93], ["2025-04-10", 44.5, 91.3, 25.29], ["2025-04-11", 41.9, 78.3, 20.19], ["2025-04-12", 42.1, 74.0, 25.26], ["2025-04-13", 46.3, 67.3, 21.27], ["2025-04-14", 59.0, 62.5, 17.65], ["2025-04-15", 49.4, 57.0, 20.92], ["2025-04-16", 42.7, 61.1, 20.58], ["2025-04-17", 46.0, 64.1, 24.43], ["2025-04-18", 62.7, 46.5, 16.0], ["2025-04-19", 70.1, 59.6, 27.84], ["2025-04-20", 58.0, 57.0, 21.19], ["2025-04-21", 65.8, 72.2, 24.62], ["2025-04-22", 57.6, 62.1, 24.54], ["2025-04-23", 61.1, 55.5, 24.6], ["2025-04-24", 67.6, 52.0, 42.15], ["2025-04-25", 64.5, 82.6, 30.12], ["2025-04-26", 55.6, 79.5, 22.01], ["2025-04-27", 50.4, 57.3, 17.56], ["2025-04-28", 58.4, 50.2, 20.66], ["2025-04-29", 68.2, 63.5, 34.0], ["2025-04-30", 59.6, 63.0, 11.66], ["2025-05-01", 65.6, 70.7, 46.71], ["2025-05-02", 64.3, 84.2, 35.28], ["2025-05-03", 60.4, 94.7, 27.52], ["2025-05-04", 60.6, 83.3, 24.77], ["2025-05-05", 59.2, 81.2, 31.19], ["2025-05-06", 54.4, 86.8, 29.21], ["2025-05-07", 60.5, 73.7, 25.39], ["2025-05-08", 58.4, 76.7, 33.09], ["2025-05-09", 50.7, 64.5, 17.33], ["2025-05-10", 56.9, 55.5, 22.11], ["2025-05-11", 63.2, 59.8, 23.6], ["2025-05-12", 66.2, 65.4, 28.55], ["2025-05-13", 65.1, 90.2, 36.47], ["2025-05-14", 65.5, 83.5, 46.36], ["2025-05-15", 68.2, 78.8, 39.39], ["2025-05-16", 70.6, 82.1, 42.14], ["2025-05-17", 66.9, 70.1, 28.3], ["2025-05-18", 62.5, 60.8, 21.38], ["2025-05-19", 57.8, 66.9, 25.73], ["2025-05-20", 56.2, 67.4, 28.74], ["2025-05-21", 61.3, 87.2, 30.48], ["2025-05-22", 51.9, 89.9, 22.55], ["2025-05-23", 51.6, 74.3, 24.67], ["2025-05-24", 52.8, 69.1, 22.37], ["2025-05-25", 55.0, 67.5, 24.5], ["2025-05-26", 58.2, 59.0, 22.68], ["2025-05-27", 58.0, 70.0, 21.63], ["2025-05-28", 57.5, 94.0, 25.43], ["2025-05-29", 61.8, 85.8, 34.19], ["2025-05-30", 57.5, 91.0, 25.2], ["2025-05-31", 53.7, 78.5, 29.36], ["2025-06-01", 54.4, 64.9, 19.04], ["2025-06-02", 58.8, 63.4, 30.27], ["2025-06-03", 65.7, 60.1, 31.63], ["2025-06-04", 73.4, 63.4, 40.88], ["2025-06-05", 70.8, 81.0, 54.18], ["2025-06-06", 69.7, 88.0, 52.44], ["2025-06-07", 69.7, 77.6, 37.32], ["2025-06-08", 66.3, 89.3, 27.05], ["2025-06-09", 66.7, 89.8, 38.36], ["2025-06-10", 66.2, 76.6, 32.77], ["2025-06-11", 68.2, 68.0, 45.39], ["2025-06-12", 73.1, 70.6, 40.42], ["2025-06-13", 73.4, 75.2, 42.81], ["2025-06-14", 70.6, 91.3, 41.64], ["2025-06-15", 70.1, 92.5, 48.88], ["2025-06-16", 69.8, 88.2, 40.82], ["2025-06-17", 72.4, 90.8, 47.37], ["2025-06-18", 73.4, 89.0, 53.11], ["2025-06-19", 69.5, 86.1, 44.38], ["2025-06-20", 69.6, 78.9, 38.1], ["2025-06-21", 74.7, 75.1, 61.49], ["2025-06-22", 80.3, 71.2, 62.74], ["2025-06-23", 82.7, 71.0, 66.04], ["2025-06-24", 83.5, 63.5, 73.92], ["2025-06-25", 80.9, 75.7, 60.28], ["2025-06-26", 78.5, 83.5, 53.75], ["2025-06-27", 75.9, 90.2, 58.57], ["2025-06-28", 77.1, 81.4, 43.48], ["2025-06-29", 77.0, 78.4, 61.04], ["2025-06-30", 76.5, 85.4, 71.29], ["2025-07-01", 73.3, 90.0, 48.21], ["2025-07-02", 74.5, 75.1, 45.29], ["2025-07-03", 74.8, 66.7, 49.89], ["2025-07-04", 75.0, 62.9, 54.34], ["2025-07-05", 78.6, 61.8, 55.41], ["2025-07-06", 80.5, 60.0, 66.91], ["2025-07-07", 77.8, 76.6, 63.89], ["2025-07-08", 75.6, 82.8, 51.82], ["2025-07-09", 73.3, 82.5, 43.14], ["2025-07-10", 74.1, 82.8, 49.23], ["2025-07-11", 77.3, 76.0, 64.1], ["2025-07-12", 81.0, 66.5, 72.81], ["2025-07-13", 76.9, 77.5, 60.92], ["2025-07-14", 75.0, 87.4, 61.19], ["2025-07-15", 77.7, 80.9, 67.07], ["2025-07-16", 76.3, 86.4, 67.6], ["2025-07-17", 77.4, 80.0, 65.32], ["2025-07-18", 72.3, 84.6, 45.26], ["2025-07-19", 76.1, 76.7, 60.52], ["2025-07-20", 76.1, 79.9, 63.16], ["2025-07-21", 71.7, 69.7, 54.02], ["2025-07-22", 71.0, 61.2, 53.47], ["2025-07-23", 75.9, 64.0, 66.85], ["2025-07-24", 80.8, 68.0, 74.29], ["2025-07-25", 81.4, 71.6, 63.23], ["2025-07-26", 80.0, 76.2, 66.37], ["2025-07-27", 77.4, 84.9, 57.89], ["2025-07-28", 78.9, 79.3, 60.68], ["2025-07-29", 78.0, 85.6, 59.68], ["2025-07-30", 80.6, 73.4, 59.8], ["2025-07-31", 73.4, 82.7, 51.96], ["2025-08-01", 67.8, 61.8, 39.0], ["2025-08-02", 67.7, 57.1, 45.73], ["2025-08-03", 68.7, 58.5, 40.69], ["2025-08-04", 71.1, 57.8, 50.6], ["2025-08-05", 74.2, 57.4, 39.08], ["2025-08-06", 75.2, 53.8, 38.97], ["2025-08-07", 74.1, 55.4, 41.75], ["2025-08-08", 75.5, 60.8, 47.86], ["2025-08-09", 77.1, 60.6, 72.62], ["2025-08-10", 78.4, 61.4, 55.52], ["2025-08-11", 79.1, 60.3, 65.11], ["2025-08-12", 81.6, 59.6, 66.9], ["2025-08-13", 75.6, 83.0, 68.14], ["2025-08-14", 74.8, 79.6, 53.31], ["2025-08-15", 75.2, 68.2, 54.43], ["2025-08-16", 78.0, 72.6, 58.79], ["2025-08-17", 76.3, 77.6, 59.95], ["2025-08-18", 73.4, 70.3, 49.96], ["2025-08-19", 76.5, 67.2, 56.57], ["2025-08-20", 74.7, 81.2, 55.93], ["2025-08-21", 71.4, 82.4, 58.25], ["2025-08-22", 72.4, 78.4, 45.81], ["2025-08-23", 74.7, 73.5, 55.28], ["2025-08-24", 73.3, 65.8, 50.09], ["2025-08-25", 66.1, 59.7, 39.83], ["2025-08-26", 62.7, 64.0, 36.35], ["2025-08-27", 62.4, 58.1, 36.26], ["2025-08-28", 61.8, 64.8, 26.39], ["2025-08-29", 62.5, 68.6, 48.87], ["2025-08-30", 60.5, 61.9, 31.44], ["2025-08-31", 63.6, 53.2, 27.79], ["2025-09-01", 65.7, 54.2, 36.08], ["2025-09-02", 66.7, 55.4, 40.04], ["2025-09-03", 66.1, 67.4, 47.13], ["2025-09-04", 63.5, 87.3, 42.41], ["2025-09-05", 66.7, 83.7, 45.73], ["2025-09-06", 62.0, 75.5, 24.48], ["2025-09-07", 59.1, 65.2, 28.54], ["2025-09-08", 58.8, 60.7, 47.92], ["2025-09-09", 61.4, 60.2, 27.73], ["2025-09-10", 63.3, 63.0, 40.11], ["2025-09-11", 65.6, 59.7, 33.3], ["2025-09-12", 67.3, 62.3, 36.42], ["2025-09-13", 69.0, 60.0, 38.11], ["2025-09-14", 70.3, 61.2, 43.68], ["2025-09-15", 72.4, 54.7, 46.77], ["2025-09-16", 71.3, 56.9, 49.08], ["2025-09-17", 71.4, 55.8, 56.8], ["2025-09-18", 71.4, 56.8, 42.23], ["2025-09-19", 71.1, 67.4, 40.26], ["2025-09-20", 69.4, 78.4, 38.58], ["2025-09-21", 71.0, 71.7, 49.35], ["2025-09-22", 71.2, 77.1, 41.12], ["2025-09-23", 68.3, 87.8, 50.69], ["2025-09-24", 66.6, 93.1, 45.28], ["2025-09-25", 67.3, 88.8, 41.69], ["2025-09-26", 66.5, 82.0, 38.24], ["2025-09-27", 66.8, 80.6, 47.12], ["2025-09-28", 68.6, 77.8, 37.77], ["2025-09-29", 69.4, 77.7, 39.93], ["2025-09-30", 68.9, 72.3, 53.68], ["2025-10-01", 63.4, 59.5, 43.52], ["2025-10-02", 61.9, 58.9, 33.53], ["2025-10-03", 63.7, 67.1, 33.69], ["2025-10-04", 64.8, 70.4, 35.16], ["2025-10-05", 64.8, 68.1, 39.79], ["2025-10-06", 66.8, 70.9, 56.61], ["2025-10-07", 64.6, 94.8, 34.09], ["2025-10-08", 58.6, 67.9, 29.15], ["2025-10-09", 50.7, 69.0, 23.54], ["2025-10-10", 53.2, 64.9, 35.25], ["2025-10-11", 55.4, 73.9, 26.57], ["2025-10-12", 57.1, 83.7, 22.46], ["2025-10-13", 58.8, 76.5, 24.76], ["2025-10-14", 59.0, 78.8, 45.82], ["2025-10-15", 56.0, 76.5, 25.28], ["2025-10-16", 51.1, 68.9, 35.71], ["2025-10-17", 50.4, 65.8, 21.05], ["2025-10-18", 61.2, 64.0, 41.61], ["2025-10-19", 62.7, 80.0, 24.53], ["2025-10-20", 51.0, 73.5, 30.11], ["2025-10-21", 50.8, 69.9, 21.48], ["2025-10-22", 47.3, 70.5, 30.76], ["2025-10-23", 45.9, 72.5, 36.61], ["2025-10-24", 44.1, 76.4, 34.5], ["2025-10-25", 45.3, 73.6, 32.7], ["2025-10-26", 45.7, 71.7, 35.05], ["2025-10-27", 47.2, 64.5, 35.24], ["2025-10-28", 46.1, 57.9, 38.16], ["2025-10-29", 44.8, 75.1, 24.36], ["2025-10-30", 47.1, 95.8, 30.25], ["2025-10-31", 46.1, 73.5, 22.2], ["2025-11-01", 47.3, 68.2, 30.36], ["2025-11-02", 46.5, 77.6, 23.01], ["2025-11-03", 46.7, 72.4, 31.6], ["2025-11-04", 46.7, 53.2, 35.49], ["2025-11-05", 51.2, 63.5, 34.86], ["2025-11-06", 44.4, 62.3, 31.29], ["2025-11-07", 48.9, 70.9, 24.39], ["2025-11-08", 50.4, 87.0, 20.49], ["2025-11-09", 43.2, 94.1, 34.25], ["2025-11-10", 32.9, 74.3, 29.65], ["2025-11-11", 29.8, 65.2, 39.49], ["2025-11-12", 41.4, 58.9, 34.17], ["2025-11-13", 41.6, 63.3, 21.07], ["2025-11-14", 42.7, 64.0, 25.34], ["2025-11-15", 54.8, 80.3, 12.26], ["2025-11-16", 46.1, 58.2, 23.63], ["2025-11-17", 36.4, 59.9, 36.1], ["2025-11-18", 34.0, 76.4, 26.68], ["2025-11-19", 38.7, 88.9, 33.3], ["2025-11-20", 37.3, 95.7, 24.86], ["2025-11-21", 42.6, 97.7, 24.75], ["2025-11-22", 44.1, 85.2, 28.33], ["2025-11-23", 42.4, 73.0, 21.21], ["2025-11-24", 40.7, 72.7, 32.9], ["2025-11-25", 49.1, 85.2, 36.93], ["2025-11-26", 47.6, 79.0, 24.96], ["2025-11-27", 31.9, 61.8, 35.26], ["2025-11-28", 29.0, 65.4, 27.79], ["2025-11-29", 29.9, 63.0, 28.93], ["2025-11-30", 36.4, 60.0, 20.04], ["2025-12-01", 30.3, 70.0, 22.89], ["2025-12-02", 30.5, 86.2, 29.67], ["2025-12-03", 27.2, 88.7, 31.66], ["2025-12-04", 25.7, 82.0, 35.58], ["2025-12-05", 20.5, 77.0, 34.28], ["2025-12-06", 29.1, 88.0, 40.53], ["2025-12-07", 32.4, 85.5, 32.28], ["2025-12-08", 24.3, 52.5, 31.75], ["2025-12-09", 25.0, 61.0, 31.85], ["2025-12-10", 36.1, 83.5, 32.16], ["2025-12-11", 26.8, 63.1, 32.19], ["2025-12-12", 28.0, 60.5, 26.69], ["2025-12-13", 30.0, 78.8, 54.22], ["2025-12-14", 13.8, 72.9, 44.9], ["2025-12-15", 12.2, 79.0, 47.43], ["2025-12-16", 22.8, 70.2, 37.07], ["2025-12-17", 37.7, 65.7, 36.67], ["2025-12-18", 43.0, 67.7, 44.97], ["2025-12-19", 32.9, 77.8, 55.28], ["2025-12-20", 31.6, 55.7, 41.58], ["2025-12-21", 32.6, 59.2, 31.71], ["2025-12-22", 30.0, 60.6, 36.11], ["2025-12-23", 41.7, 93.4, 18.31], ["2025-12-24", 37.4, 84.8, 24.62], ["2025-12-25", 38.6, 81.8, 28.92], ["2025-12-26", 39.6, 88.6, 34.03], ["2025-12-27", 36.3, 88.9, 31.28], ["2025-12-28", 46.6, 90.6, 25.91], ["2025-12-29", 36.2, 74.2, 46.95], ["2025-12-30", 21.8, 74.3, 38.92], ["2025-12-31", 25.1, 82.9, 43.49], ["2026-01-01", 18.3, 75.8, 49.42], ["2026-01-02", 20.0, 77.4, 58.85], ["2026-01-03", 19.0, 79.5, 51.27], ["2026-01-04", 24.9, 82.5, 57.29], ["2026-01-05", 31.7, 73.5, 40.24], ["2026-01-06", 39.7, 88.8, 37.09], ["2026-01-07", 42.5, 89.0, 20.84], ["2026-01-08", 40.7, 80.9, 30.02], ["2026-01-09", 52.3, 67.5, 37.48], ["2026-01-10", 42.2, 93.9, 14.08], ["2026-01-11", 31.0, 77.8, 18.46], ["2026-01-12", 30.6, 68.6, 32.87], ["2026-01-13", 37.4, 57.2, 35.44], ["2026-01-14", 39.9, 84.8, 19.92], ["2026-01-15", 17.4, 65.8, 39.82], ["2026-01-16", 22.9, 67.5, 40.05], ["2026-01-17", 31.8, 85.9, 29.86], ["2026-01-18", 20.8, 69.6, 32.36], ["2026-01-19", 18.4, 67.2, 42.12], ["2026-01-20", 10.3, 56.9, 45.38], ["2026-01-21", 25.2, 66.3, 61.31], ["2026-01-22", 31.9, 59.3, 45.11], ["2026-01-23", 18.5, 47.9, 30.62], ["2026-01-24", 7.1, 44.8, 44.67], ["2026-01-25", 17.2, 81.7, 73.22], ["2026-01-26", 13.3, 78.4, 51.08], ["2026-01-27", 8.1, 70.5, 54.8], ["2026-01-28", 5.7, 72.8, 54.02], ["2026-01-29", 6.8, 73.2, 50.39], ["2026-01-30", 3.5, 68.5, 51.24], ["2026-01-31", 2.7, 71.0, 62.31], ["2026-02-01", 10.4, 74.5, 45.84], ["2026-02-02", 15.3, 69.4, 54.94], ["2026-02-03", 24.3, 74.5, 58.42], ["2026-02-04", 17.8, 77.4, 52.15], ["2026-02-05", 13.5, 78.1, 56.24], ["2026-02-06", 22.6, 82.8, 51.21], ["2026-02-07", 11.2, 68.4, 47.4], ["2026-02-08", 5.7, 66.4, 47.87], ["2026-02-09", 11.4, 64.2, 63.8], ["2026-02-10", 35.1, 69.2, 42.02], ["2026-02-11", 32.3, 81.5, 51.64], ["2026-02-12", 26.2, 76.2, 42.02], ["2026-02-13", 25.9, 72.9, 52.21], ["2026-02-14", 36.6, 68.8, 38.0], ["2026-02-15", 37.1, 88.7, 26.78], ["2026-02-16", 36.4, 94.7, 26.96], ["2026-02-17", 42.1, 81.3, 23.6], ["2026-02-18", 47.6, 89.5, 33.76], ["2026-02-19", 50.1, 89.3, 29.52], ["2026-02-20", 47.9, 70.2, 33.69], ["2026-02-21", 36.2, 67.2, 37.26], ["2026-02-22", 30.7, 78.7, 46.56], ["2026-02-23", 27.2, 79.6, 43.23], ["2026-02-24", 24.3, 70.2, 45.04], ["2026-02-25", 38.7, 65.1, 45.36], ["2026-02-26", 32.7, 60.9, 28.21], ["2026-02-27", 39.0, 70.0, 34.44], ["2026-02-28", 46.7, 56.2, 30.32], ["2026-03-01", 30.7, 58.1, 35.47], ["2026-03-02", 28.0, 54.0, 30.12], ["2026-03-03", 40.3, 94.6, 36.23], ["2026-03-04", 48.7, 93.3, 39.87], ["2026-03-05", 55.3, 95.4, 36.58], ["2026-03-06", 60.2, 85.7, 26.59], ["2026-03-07", 65.1, 73.4, 26.16], ["2026-03-08", 54.0, 66.3, 25.63], ["2026-03-09", 53.5, 52.6, 26.34], ["2026-03-10", 59.4, 70.2, 31.27], ["2026-03-11", 61.4, 92.5, 36.43], ["2026-03-12", 37.6, 59.2, 36.45], ["2026-03-13", 42.5, 49.3, 18.4], ["2026-03-14", 40.0, 47.9, 21.74], ["2026-03-15", 55.9, 43.3, 28.27], ["2026-03-16", 46.4, 79.1, 35.87], ["2026-03-17", 23.2, 67.3, 60.97], ["2026-03-18", 25.6, 67.0, 60.09], ["2026-03-19", 41.2, 70.7, 39.11], ["2026-03-20", 49.1, 75.1, 39.86], ["2026-03-21", 49.4, 76.1, 29.25], ["2026-03-22", 60.9, 62.8, 30.93], ["2026-03-23", 39.2, 77.0, 37.85], ["2026-03-24", 34.8, 56.8, 34.02], ["2026-03-25", 48.3, 51.1, 35.01], ["2026-03-26", 63.1, 64.0, 21.41], ["2026-03-27", 41.9, 73.6, 32.62], ["2026-03-28", 34.8, 60.4, 21.2], ["2026-03-29", 45.2, 54.4, 22.75], ["2026-03-30", 59.0, 61.0, 17.38], ["2026-03-31", 68.1, 62.0, 43.6], ["2026-04-01", 57.3, 89.0, 26.93], ["2026-04-02", 62.0, 78.3, 31.39], ["2026-04-03", 68.9, 70.8, 32.35], ["2026-04-04", 68.8, 73.1, 39.98], ["2026-04-05", 48.3, 71.8, 22.22], ["2026-04-06", 44.2, 61.0, 26.1], ["2026-04-07", 36.6, 54.7, 31.82], ["2026-04-08", 42.2, 52.2, 27.4], ["2026-04-09", 57.5, 46.2, 17.25], ["2026-04-10", 60.3, 62.5, 12.98], ["2026-04-11", 49.0, 67.2, 19.06], ["2026-04-12", 59.9, 54.5, 22.58], ["2026-04-13", 70.2, 54.8, 35.3], ["2026-04-14", 68.1, 64.8, 28.7], ["2026-04-15", 70.1, 74.4, 52.23], ["2026-04-16", 70.1, 67.1, 27.13], ["2026-04-17", 63.5, 72.6, 34.3], ["2026-04-18", 65.3, 69.6, 20.01], ["2026-04-19", 46.8, 57.0, 16.16], ["2026-04-20", 39.7, 58.9, 12.75], ["2026-04-21", 50.1, 49.8, 17.0], ["2026-04-22", 65.4, 52.3, 40.34], ["2026-04-23", 64.9, 73.2, 31.77], ["2026-04-24", 68.5, 58.0, 30.83], ["2026-04-25", 59.3, 81.4, 20.16], ["2026-04-26", 52.7, 71.6, 15.85], ["2026-04-27", 59.6, 57.1, 34.95], ["2026-04-28", 62.3, 69.8, 32.43], ["2026-04-29", 57.7, 89.5, 30.86], ["2026-04-30", 47.9, 76.7, 21.52], ["2026-05-01", 45.0, 80.8, 30.74], ["2026-05-02", 41.3, 75.4, 30.74], ["2026-05-03", 46.3, 61.0, 17.99], ["2026-05-04", 58.5, 58.7, 24.82], ["2026-05-05", 65.1, 60.6, 23.79], ["2026-05-06", 54.7, 77.5, 24.43], ["2026-05-07", 50.8, 60.1, 28.28], ["2026-05-08", 52.4, 64.8, 17.21], ["2026-05-09", 56.9, 79.7, 30.21], ["2026-05-10", 55.6, 71.1, 21.74], ["2026-05-11", 52.9, 53.2, 16.28], ["2026-05-12", 55.1, 54.2, 26.99], ["2026-05-13", 57.2, 68.6, 27.79], ["2026-05-14", 49.1, 67.7, 27.13], ["2026-05-15", 54.0, 60.0, 28.68], ["2026-05-16", 60.6, 76.4, 26.09], ["2026-05-17", 69.7, 77.5, 41.23], ["2026-05-18", 74.6, 65.7, 53.66], ["2026-05-19", 75.4, 70.2, 55.27], ["2026-05-20", 63.9, 89.4, 49.16], ["2026-05-21", 55.4, 80.5, 29.97], ["2026-05-22", 56.2, 86.2, 25.52], ["2026-05-23", 59.9, 92.2, 31.13], ["2026-05-24", 64.2, 95.1, 46.01], ["2026-05-25", 67.4, 84.5, 37.15], ["2026-05-26", 68.1, 79.6, 49.44], ["2026-05-27", 68.7, 89.8, 58.08], ["2026-05-28", 64.0, 64.9, 34.68], ["2026-05-29", 62.6, 69.2, 45.43], ["2026-05-30", 61.4, 59.0, 30.76], ["2026-05-31", 61.1, 60.9, 26.33], ["2026-06-01", 62.7, 59.9, 39.17], ["2026-06-02", 63.2, 57.2, 29.93], ["2026-06-03", 65.2, 54.3, 28.68], ["2026-06-04", 68.6, 57.7, 37.38], ["2026-06-05", 72.0, 57.4, 47.32], ["2026-06-06", 70.9, 75.3, 48.42], ["2026-06-07", 73.2, 75.2, 55.45], ["2026-06-08", 73.4, 68.1, 61.06], ["2026-06-09", 74.7, 78.9, 63.62], ["2026-06-10", 75.1, 88.9, 56.55], ["2026-06-11", 76.7, 81.9, 36.84], ["2026-06-12", 75.4, 74.6, 29.91], ["2026-06-13", 73.5, 60.6, 29.34], ["2026-06-14", 70.9, 78.3, 29.33], ["2026-06-15", 61.5, 75.1, 34.8], ["2026-06-16", 62.6, 68.9, 33.82], ["2026-06-17", 67.5, 71.3, 40.68], ["2026-06-18", 71.6, 74.0, 53.82], ["2026-06-19", 66.1, 64.8, 29.47], ["2026-06-20", 66.1, 69.6, 33.39], ["2026-06-21", 66.2, 73.8, 36.32], ["2026-06-22", 67.5, 87.2, 35.59], ["2026-06-23", 65.8, 69.6, 40.82], ["2026-06-24", 70.1, 55.1, 36.92], ["2026-06-25", 67.9, 73.8, 49.69], ["2026-06-26", 67.6, 89.5, 45.78], ["2026-06-27", 70.3, 89.2, 49.07], ["2026-06-28", 71.0, 94.2, 48.82], ["2026-06-29", 72.4, 90.0, 60.68], ["2026-06-30", 81.2, 74.5, 67.38], ["2026-07-01", 82.6, 75.4, 68.14], ["2026-07-02", 83.1, 71.8, 81.8], ["2026-07-03", 81.1, 78.6, 78.39], ["2026-07-04", 75.9, 87.6, 60.62], ["2026-07-05", 73.8, 91.3, 61.23], ["2026-07-06", 74.5, 88.8, 52.35], ["2026-07-07", 75.8, 83.8, 58.37], ["2026-07-08", 77.4, 75.5, 56.88], ["2026-07-09", 76.9, 75.8, 57.19], ["2026-07-10", 72.6, 94.3, 49.86], ["2026-07-11", 73.5, 88.6, 61.02], ["2026-07-12", 75.9, 77.7, 53.98], ["2026-07-13", 77.0, 75.2, 59.66], ["2026-07-14", 79.0, 72.4, 59.38], ["2026-07-15", 81.0, 72.2, 64.4], ["2026-07-16", 81.1, 71.5, 79.42], ["2026-07-17", 76.3, 65.3, 64.41], ["2026-07-18", 75.0, 89.6, 60.04], ["2026-07-19", 71.5, 73.8, 41.31], ["2026-07-20", 70.4, 65.4, 34.41], ["2026-07-21", 72.0, 89.5, 31.35], ["2026-07-22", 69.7, 68.1, 29.54], ["2026-07-23", 64.8, 67.4, 33.52], ["2026-07-24", 69.2, 69.2, 53.36], ["2026-07-25", 73.2, 71.1, 53.62], ["2026-07-26", 72.2, 73.5, 45.73], ["2026-07-27", 74.6, 79.2, 47.98], ["2026-07-28", 72.2, 84.6, 45.63], ["2026-07-29", 70.8, 70.1, 42.31], ["2026-07-30", 70.4, 58.9, 42.11], ["2026-07-31", 73.0, 61.3, 50.19], ["2026-08-01", 72.8, 78.2, 56.23], ["2026-08-02", 72.5, 91.8, 40.73], ["2026-08-03", 71.5, 76.0, 47.49], ["2026-08-04", 72.9, 68.9, 54.33], ["2026-08-05", 76.2, 80.2, 48.98], ["2026-08-06", 76.5, 79.8, 59.0], ["2026-08-07", 74.1, 88.3, 61.96], ["2026-08-08", 73.9, 86.5, 54.03], ["2026-08-09", 75.9, 75.7, 64.27], ["2026-08-10", 73.3, 92.7, 46.26], ["2026-08-11", 70.8, 90.8, 48.4], ["2026-08-12", 69.5, 88.8, 41.85], ["2026-08-13", 72.4, 84.5, 48.62], ["2026-08-14", 72.4, 91.8, 51.31], ["2026-08-15", 73.4, 86.8, 56.09], ["2026-08-16", 74.6, 92.4, 64.38], ["2026-08-17", 74.8, 88.1, 59.14], ["2026-08-18", 71.5, 75.0, 53.09], ["2026-08-19", 70.8, 81.7, 51.67], ["2026-08-20", 69.0, 94.0, 37.93], ["2026-08-21", 69.6, 82.9, 53.12], ["2026-08-22", 67.9, 89.6, 43.15], ["2026-08-23", 65.7, 77.8, 38.45]];
+
+// Real avg temp/humidity/usage by calendar month, pooled across years:
+// [monthName, avgTempF, avgHumidityPct, avgElecKwh, nElecDays, avgGasCostPerDay|null, nGasPeriods]
+const MONTHLY_RECORDS = [["Jan", 23.6, 72.4, 42.3, 31, 5.61, 2], ["Feb", 29.5, 74.5, 42.4, 28, 7.85, 2], ["Mar", 47.2, 67.6, 32.8, 31, 4.39, 2], ["Apr", 55.5, 66.3, 25.0, 60, 3.01, 2], ["May", 59.4, 74.1, 30.9, 62, 2.45, 2], ["Jun", 70.8, 75.8, 45.2, 60, 2.46, 2], ["Jul", 75.6, 76.1, 56.5, 62, 2.43, 2], ["Aug", 72.0, 73.6, 50.0, 54, 2.07, 2], ["Sep", 67.2, 69.8, 41.7, 30, 2.13, 2], ["Oct", 54.4, 72.1, 32.4, 31, 2.32, 2], ["Nov", 41.8, 72.6, 28.4, 30, 3.08, 2], ["Dec", 30.5, 75.6, 35.6, 31, 4.88, 2]];
+
+// First experiment date — days on/after this are colored as 'new settings' in charts.
+const SETTINGS_CHANGE_DATE = "2026-06-28";
+
+// Mirrors data/settings_changelog.csv row for row: [date, thermostatSetF, notes].
+const SETTINGS_LOG = [["2020-01-01", "71", "Placeholder baseline - exact thermostat history before this project began (July 2026) is unknown; assumed 71F back to this date for lack of better info"], ["2025-11-01", "68", "Normal winter heating setpoint (Nov 1 - ~Apr 20 each year)"], ["2026-04-21", "71", "Reverts to normal summer AC setpoint after winter heating season ends"], ["2026-06-28", "72", "Central AC bumped 71->72F; window AC (upstairs bedroom) switched from a flat 71F to a 2-part daily schedule: 75F from 1am-1pm, 72F from 1pm-1am - heat wave cost-saving experiment"], ["2026-07-03", "72", "Window AC (upstairs bedroom) changed from the 75F(1am-1pm)/72F(1pm-1am) schedule to a flat 73F all day - new test, central AC unchanged at 72F"], ["2026-07-04", "71", "Heat wave test week ended - storm broke the heat. Window AC unplugged from the EcoFlow Delta 3 test rig and returned to normal grid power (the Delta 3 real-wattage test concluded with the full 24hr measurement from 7/3-7/4, 172W avg). Central AC and window AC both lowered from 72F/73F to 71F to cool down post-heat-wave; user noted this is likely temporary and may raise it again later that night. Delta 3 being charged to 100% in case of a storm-related power outage."], ["2026-07-19", "73", "Family (wife + kids) left for vacation 7/19; house unoccupied most weekdays (user at work most of the day) through the planned return around 7/23. Three changes together this week: (1) Central AC bumped 71->73F since the house is mostly empty. (2) Daughter's upstairs bedroom window AC turned off entirely (that room gets a lot of afternoon sun and the AC runs a fair amount when she's using it) and the blinds closed to cut solar heat gain instead. (3) Forecast is milder this week, no heat wave - so any savings/cost delta vs. the model reflects settings + occupancy, not just weather. Expect the actual/model gap to be larger than a normal week for these reasons."], ["2026-07-22", "73", "Bathroom window (upstairs) opened ~midday 7/22 and left open ~24h with the upstairs window AC still off; central AC unchanged at 73F. Passive free-cooling: outdoor fell to 62F overnight 7/22, yet the bedroom held a steady low-70s with no AC. Notable sensor fingerprint - the two bedroom sensors (Aqara vs HomePod), which normally differ ~4-5F (up to +8.6F) under active AC stratification, converged to nearly identical readings (both ~72.7F by 7/23 13:30) as the room cooled evenly through the open window instead of the AC."], ["2026-07-24", "73", "Family returned from vacation the evening of 7/23 (~7pm) - 7/24 and 7/25 were full-house, everyone-home days. Oldest daughter's upstairs window AC was turned back on the moment everyone returned (it was only ever off during the 7/19-23 vacation week while she herself was away) and has stayed on since. Central AC unchanged at 73F. This period isolates 'full occupancy, central AC at 73F, daughter's window AC back on' - distinct from both the empty-house week before it and the partial band-camp week after it."], ["2026-07-26", "73", "Wife + middle daughter left early 7/26 for band camp, planned return 7/31 - partial-occupancy week (2 fewer people than a full house, user + remaining kids still home most days). AC settings unchanged from the prior period: central at 73F, oldest daughter's upstairs window AC still on (it has run continuously since returning from vacation on 7/23 - this band-camp absence doesn't affect her or her AC)."], ["2026-08-01", "73", "Wife + middle daughter returned from band camp 7/31; everyone home as of 8/1, back to full occupancy. Central AC and oldest daughter's window AC unchanged at 73F (no explicit revert to 71F mentioned) - this marks the end of the vacation/band-camp stretch (7/19-7/31) and a return to normal full-house life at the current settings."]];
+
+// Last real date seen in each source file at refresh time.
+const LAST_DATA_DATES = {"aep": "2026-08-23", "sensors": "2026-08-28", "gas": "2026-07-17"};
+
+// Nightly refit of the electric model on all metered days (same piecewise
+// structure the dashboard has always used - only the coefficients update).
+const MODEL_FIT = {"balance": 57, "vertexKwh": 21.375, "heatSlope": 0.6116, "coolSlope": 1.8047, "humidityCoef": 0.1382, "humidityBaseline": 72, "fitDays": 510, "maeUsd": 1.05, "medianMissUsd": 0.87, "p75MissUsd": 1.46};
+
+// Last real reading per indoor sensor — a display of latest known values, not a prediction.
+const ROOM_SNAPSHOT = [{"room": "Main Floor", "tempF": 71.24, "humidityPct": 52.0}, {"room": "Basement Steps", "tempF": 77.72, "humidityPct": 47.0}, {"room": "Bedroom (Aqara)", "tempF": 74.3, "humidityPct": 54.0}, {"room": "Bedroom (HomePod)", "tempF": 72.32, "humidityPct": 53.0}, {"room": "Crawlspace", "tempF": 72.86, "humidityPct": 75.0}];
+const ROOM_SNAPSHOT_AS_OF = "2026-08-28 09:00";
+// ==HP_DATA_END==
+
+// Apply the nightly refit (if present) over the baked-in defaults.
+if (typeof MODEL_FIT !== 'undefined' && MODEL_FIT) {
+  ELECTRIC.balance = MODEL_FIT.balance;
+  ELECTRIC.vertexKwh = MODEL_FIT.vertexKwh;
+  ELECTRIC.heatSlope = MODEL_FIT.heatSlope;
+  ELECTRIC.coolSlope = MODEL_FIT.coolSlope;
+  ELECTRIC.humidityCoef = MODEL_FIT.humidityCoef;
+  ELECTRIC.humidityBaseline = MODEL_FIT.humidityBaseline;
+  ELECTRIC.typicalMissUsd = MODEL_FIT.medianMissUsd;
+}
+
+const STATIONS = [
+  { id:"kitchen", name:"Kitchen" },
+  { id:"living", name:"Living Room" },
+  { id:"kids", name:"Sophia and Teagan's Room" },
+  { id:"riley", name:"Riley's Room" },
+  { id:"master", name:"Master Bedroom" },
+  { id:"outside", name:"Outside" },
+  { id:"basement", name:"Basement" }
+];
+
+const BATTERIES = [
+  { id:"deltapro", name:"EcoFlow Delta Pro", wh:3600, defaultChecked:true, note:"Emergency fridge/freezer anchor", station:"kitchen" },
+  { id:"delta3", name:"EcoFlow Delta 3", wh:1024, defaultChecked:true, note:"Living space backup - portable, was moved upstairs for AC testing 7/3/2026", station:"living" },
+  { id:"river2", name:"EcoFlow River 2", wh:256, defaultChecked:false, note:"Small personal battery", station:"living" },
+  { id:"anker", name:"Anker 548 Power Bank", wh:192, defaultChecked:false, note:"First-grab emergency light/power", station:"living" },
+  { id:"egoinverter", name:"EGO Power+ Inverter", egoSelect:true, defaultChecked:false, station:"basement", note:"Converts one EGO battery into AC power for anything you'd plug in. Only one battery powers it at a time and it's a single outlet, so treat it as one device at a time - pick which battery size you're using below once checked, and swap in a fresh one as it depletes." }
+];
+
+// EGO batteries aren't separate simultaneous capacity - only one is ever in the
+// Inverter (or a given native tool) at once. Pick a size per EGO device below
+// instead of adding wattage together. Wh = Ah x 56V nominal.
+const EGO_BATTERY_SIZES = [
+  { id:"2.5", label:"2.5Ah - 140Wh (own 3)", wh:140 },
+  { id:"5.0", label:"5.0Ah - 280Wh (own 1)", wh:280 },
+  { id:"7.5", label:"7.5Ah - 420Wh (own 1)", wh:420 }
+];
+
+// Native EGO tools that plug straight into an EGO battery - no inverter
+// involved, and they can't run on the EcoFlow batteries. Each one uses its
+// own battery, independent of whatever's powering the EGO Inverter above.
+const EGO_DIRECT_DEVICES = [
+  { id:"egofan-small", name:"EGO Fan (10\" FN1000, small)", watts:6, note:"Low speed matches your real heat-wave test: ~24 hrs on a 2.5Ah (140Wh) battery \u2248 6W - what the calculator uses. No published high-speed drain test exists for this model (1,700 CFM max, about a third of the 18\" fan's airflow) - a rough estimate for high/turbo would be ~25-40W, but that's reasoning, not a measurement, so treat it as lower-confidence if you ever plan around running it above low speed." },
+  { id:"egofan-large", name:"EGO Fan (18\" FN1800, large)", watts:6, note:"Low speed matches your real heat-wave test: ~24 hrs on a 2.5Ah (140Wh) battery \u2248 6W - what the calculator uses. For reference, a third-party drain test (Pro Tool Reviews) ran this exact fan on a 5.0Ah (280Wh) battery: High \u2248 65W (4h17m to shutoff), Turbo/max 5,000 CFM \u2248 98W (2h51m). Real packs deliver ~90-95% of rated Wh, so actual draw is likely a touch lower (~60W high, ~90W turbo). Only relevant if you'd run it above low speed - the calculator still assumes low." }
+];
+
+const APPLIANCES = [
+  { id:"mainfridge", name:"Main refrigerator", watts:100, tag:"essential", defaultChecked:true, station:"kitchen" },
+  { id:"freezer", name:"Deep freezer", watts:120, tag:"essential", defaultChecked:false, station:"kitchen" },
+  { id:"router", name:"WiFi router", watts:12, tag:"essential", defaultChecked:true, station:"living" },
+  { id:"lights", name:"Low-watt lights (LED)", watts:8, tag:"essential", defaultChecked:true, station:"living", note:"Assumes a single LED bulb on at once (~5-10W range for your bulbs) - the realistic essential-use case, not several rooms lit up at once." },
+  { id:"fan", name:"Fan(s)", watts:35, tag:"essential", defaultChecked:true, station:"living" },
+  { id:"phones", name:"Phone/tablet charging", watts:4, tag:"essential", defaultChecked:true, station:"living", note:"Averaged across a full day, not the ~15-20W a phone pulls while actively fast-charging. Phones/tablets don't stay plugged in and drawing power the whole outage - they top off for an hour or two, then sit near 0W once full. If this station is charging way more devices than a typical day, bump the wattage up." },
+  { id:"phones-riley", name:"Phone/tablet charging — Riley's Room", watts:4, tag:"nice", defaultChecked:false, station:"riley", note:"Averaged across a full day, not the ~15-20W a phone pulls while actively fast-charging. Phones/tablets don't stay plugged in and drawing power the whole outage - they top off for an hour or two, then sit near 0W once full. If this station is charging way more devices than a typical day, bump the wattage up." },
+  { id:"phones-kids", name:"Phone/tablet charging — Sophia & Teagan's Room", watts:4, tag:"nice", defaultChecked:false, station:"kids", note:"Averaged across a full day, not the ~15-20W a phone pulls while actively fast-charging. Phones/tablets don't stay plugged in and drawing power the whole outage - they top off for an hour or two, then sit near 0W once full. If this station is charging way more devices than a typical day, bump the wattage up." },
+  { id:"cameras", name:"Outdoor security cameras (USB)", watts:8, tag:"essential", defaultChecked:false, station:"outside" },
+  { id:"minifridge", name:"Mini fridge", watts:60, tag:"nice", defaultChecked:false, station:"living" },
+  { id:"tv", name:"TV + Apple TV", watts:120, tag:"nice", defaultChecked:false, station:"living" },
+  { id:"homepod", name:"HomePod", watts:10, tag:"nice", defaultChecked:false, station:"master" },
+  { id:"console", name:"Game console", watts:70, tag:"nice", defaultChecked:false, station:"living" },
+  { id:"laptop", name:"MacBook Air", watts:60, tag:"nice", defaultChecked:false, station:"living" },
+  { id:"microwave", name:"Microwave", minutesMode:true, runningWatts:1550, tag:"nice", defaultChecked:false, station:"kitchen", note:"1,550W is real wall draw, not the '1,000W' cooking-power label on the door (that's output, not input - microwaves pull noticeably more than their labeled rating). Enter minutes of actual cooking per day, not the whole outage - it's a one-time hit against that station's battery like the coffee maker, not a continuous load." },
+  { id:"blanket", name:"Electric blanket", watts:120, tag:"nice", defaultChecked:false, station:"master" },
+  { id:"windowac", name:"Window AC (upstairs bedroom)", watts:172, tag:"nice", defaultChecked:false, station:"master", note:"Confirmed by a full real 24-hour Delta 3 test (7/3 1pm - 7/4 1pm, 2026) - a complete measured cycle, not an extrapolation. Sustained 530-550W during active afternoon cooling (1-7pm), then near-zero (~1W idle) for most of the rest of the day/night once the setpoint was satisfied, plus two shorter cycles (~225W around 4am, ~210W around noon). Real 24hr total: 4,132 Wh = 172W average = $0.70/day - well under the original $2/day worry. Good fit for a SHORT outage with a known likely end (e.g. a car knocks out a pole) where sleeping through the heat matters more than rationing - not meant for a multi-day/uncertain outage." },
+  { id:"pool", name:"Pool pump", watts:120, tag:"avoid", defaultChecked:false, station:"outside" },
+  { id:"heater", name:"Portable electric heater", watts:1200, tag:"avoid", defaultChecked:false, station:"basement", note:"Same short-outage exception logic as Window AC above: not a default choice (drains a Delta Pro in ~3hrs), but a brief run to protect pipes during a short/likely-to-resolve winter outage is reasonable. Not for extended/uncertain outages." },
+  { id:"coffeemaker", name:"Coffee maker (pod/Keurig-style)", cupsMode:true, whPerCup:35, tag:"nice", defaultChecked:false, station:"kitchen", note:"Brewing is a short burst, not a continuous draw - ~35 Wh per cup for a pod machine (fast flash-heater, but pays the heating overhead every single cup since there's no shared pot). Counted as a one-time hit against that station's battery, not an ongoing load." }
+];
+
+// ---------- CUSTOM DEVICES (future purchases, added from the UI) ----------
+// Lets new batteries/appliances be added straight from the Outage tab without a
+// code change/rebuild. Stored in this browser's localStorage only - it persists
+// across visits/reloads on this device, but won't show up on a different phone
+// or computer, and clearing Safari data would clear it too. For anything that
+// should be permanent (visible from any device), just mention it and it'll get
+// added to the real BATTERIES/APPLIANCES lists above instead.
+function loadCustomList(key) {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(key) || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) { return []; }
+}
+function saveCustomList(key, list) {
+  try { localStorage.setItem(key, JSON.stringify(list)); } catch (e) { /* storage unavailable - fail quietly */ }
+}
+let CUSTOM_BATTERIES = loadCustomList('hp_customBatteries');
+let CUSTOM_APPLIANCES = loadCustomList('hp_customAppliances');
+function allBatteries() { return BATTERIES.concat(CUSTOM_BATTERIES); }
+function allAppliances() { return APPLIANCES.concat(CUSTOM_APPLIANCES); }
+
+// ---------- ROOM SNAPSHOT ----------
+function renderRoomSnapshot() {
+  const container = document.getElementById('roomSnapshot');
+  const asOfEl = document.getElementById('roomSnapshotAsOf');
+  if (!container) return;
+
+  // "Outside" tile is live (via loadCurrentWeather), not from the Shortcut, so it always
+  // renders here first as a loading placeholder even if indoor sensors have no data yet.
+  let html = '<div class="room-grid">';
+  html += `
+      <div class="room-tile" id="outsideTile">
+        <div class="room-name"><span class="room-dot" style="background:var(--neutral);"></span>Outside</div>
+        <div class="room-temp">--°F</div>
+        <div class="room-hum">Loading live weather…</div>
+      </div>`;
+
+  if (!ROOM_SNAPSHOT.length) {
+    html += '</div><div class="note" style="margin-top:8px;">No indoor sensor readings yet.</div>';
+    container.innerHTML = html;
+    return;
+  }
+  ROOM_SNAPSHOT.forEach(r => {
+    // Fridge is judged by food-safety thresholds (USDA: keep at/below 40°F), not
+    // the room-comfort thresholds used for everything else here, and it has no
+    // humidity sensor, so both the color rule and the second line are special-cased.
+    const isFridge = r.room === 'Fridge';
+    const dotColor = isFridge
+      ? (r.tempF > 40 ? 'var(--bad)' : (r.tempF > 38 ? 'var(--warn)' : 'var(--accent)'))
+      : (r.tempF >= 76 ? 'var(--bad)' : (r.tempF >= 72 ? 'var(--warn)' : 'var(--accent)'));
+    const secondLine = (r.humidityPct === null || r.humidityPct === undefined)
+      ? (isFridge ? 'Food safety: keep ≤ 40°F' : '')
+      : r.humidityPct + '% humidity';
+    html += `
+      <div class="room-tile">
+        <div class="room-name"><span class="room-dot" style="background:${dotColor};"></span>${r.room}</div>
+        <div class="room-temp">${r.tempF.toFixed(1)}°F</div>
+        <div class="room-hum">${secondLine}</div>
+      </div>`;
+  });
+  html += '</div>';
+  container.innerHTML = html;
+  asOfEl.innerText = 'Outside is live; indoor rooms as of ' + ROOM_SNAPSHOT_AS_OF + ' — refreshed by the daily data update, or run the Home Temp Report Shortcut for a newer reading.';
+}
+
+// ---------- TABS ----------
+const TAB_IDS = ['today', 'sim', 'outage'];
+function showTab(tab) {
+  TAB_IDS.forEach(t => {
+    const el = document.getElementById('tab-' + t);
+    if (el) el.style.display = t === tab ? 'block' : 'none';
+  });
+  document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', TAB_IDS[i] === tab));
+  const ti = document.getElementById('tabIndicator');
+  if (ti) ti.style.transform = 'translateX(' + (TAB_IDS.indexOf(tab) * 100) + '%)';
+  window.scrollTo(0, 0);
+}
+
+// ---------- SIMULATOR LOGIC ----------
+function electricDaily(tempF, humidityPct) {
+  let kwh;
+  if (tempF >= ELECTRIC.balance) {
+    kwh = ELECTRIC.vertexKwh + ELECTRIC.coolSlope * (tempF - ELECTRIC.balance);
+    // Humidity only matters when the AC is actually running (cooling side). Higher humidity
+    // means the compressor has to remove more moisture (latent load), not just cool the air,
+    // so it costs more even at the same dry-bulb temperature.
+    if (typeof humidityPct === 'number') {
+      kwh += ELECTRIC.humidityCoef * (humidityPct - ELECTRIC.humidityBaseline);
+      if (kwh < 0) kwh = 0;
+    }
+  } else {
+    kwh = ELECTRIC.vertexKwh + ELECTRIC.heatSlope * (ELECTRIC.balance - tempF);
+  }
+  return { kwh, cost: ELECTRIC.fixedPerDay + kwh * ELECTRIC.rate };
+}
+
+function gasDaily(tempF) {
+  if (tempF >= GAS.balance) return GAS.floor;
+  return GAS.floor + GAS.slope * (GAS.balance - tempF);
+}
+
+function setTemp(t) {
+  document.getElementById('tempSlider').value = t;
+  updateSim();
+}
+
+function drawChart(currentTemp, currentTotal, humidityPct) {
+  const svg = document.getElementById('costChart');
+  const W = 700, H = 220, padL = 40, padR = 10, padT = 10, padB = 24;
+  const minT = -10, maxT = 100;
+  const pts = [];
+  let maxCost = 0;
+  for (let t = minT; t <= maxT; t += 2) {
+    const c = electricDaily(t, humidityPct).cost + gasDaily(t);
+    pts.push([t, c]);
+    if (c > maxCost) maxCost = c;
+  }
+  maxCost = Math.ceil(maxCost / 5) * 5;
+  const x = t => padL + (t - minT) / (maxT - minT) * (W - padL - padR);
+  const y = c => H - padB - (c / maxCost) * (H - padT - padB);
+
+  let path = pts.map((p,i) => (i===0 ? 'M' : 'L') + x(p[0]).toFixed(1) + ',' + y(p[1]).toFixed(1)).join(' ');
+
+  const curX = x(currentTemp), curY = y(currentTotal);
+
+  svg.innerHTML = `
+    <line x1="${padL}" y1="${H-padB}" x2="${W-padR}" y2="${H-padB}" style="stroke:var(--chart-grid)" stroke-width="1"/>
+    <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${H-padB}" style="stroke:var(--chart-grid)" stroke-width="1"/>
+    <path d="${path} L ${x(maxT).toFixed(1)},${H-padB} L ${x(minT).toFixed(1)},${H-padB} Z" style="fill:var(--chart-line)" opacity="0.09" stroke="none"/>
+    <path d="${path}" fill="none" style="stroke:var(--chart-line)" stroke-width="2.5"/>
+    <line x1="${x(ELECTRIC.balance)}" y1="${padT}" x2="${x(ELECTRIC.balance)}" y2="${H-padB}" style="stroke:var(--chart-grid-strong)" stroke-width="1" stroke-dasharray="3,3"/>
+    <text x="${x(ELECTRIC.balance)}" y="${padT+10}" font-size="10" style="fill:var(--chart-text)" text-anchor="middle">${ELECTRIC.balance}°F</text>
+    <circle cx="${curX}" cy="${curY}" r="6" style="fill:var(--bad);stroke:var(--surface-solid)" stroke-width="2"/>
+    <text x="${padL-6}" y="${padT+4}" font-size="10" style="fill:var(--chart-text)" text-anchor="end">$${maxCost}</text>
+    <text x="${padL-6}" y="${H-padB}" font-size="10" style="fill:var(--chart-text)" text-anchor="end">$0</text>
+    <text x="${x(minT)}" y="${H-6}" font-size="10" style="fill:var(--chart-text)" text-anchor="start">${minT}°F</text>
+    <text x="${x(maxT)}" y="${H-6}" font-size="10" style="fill:var(--chart-text)" text-anchor="end">${maxT}°F</text>
+  `;
+}
+
+function updateSim() {
+  const temp = parseFloat(document.getElementById('tempSlider').value);
+  const humidity = parseFloat(document.getElementById('humiditySlider').value);
+  const delta = parseFloat(document.getElementById('deltaSlider').value);
+  document.getElementById('tempLabel').innerText = temp + '°F';
+  document.getElementById('humidityLabel').innerText = humidity + '%';
+  document.getElementById('deltaLabel').innerText = (delta > 0 ? '+' : '') + delta + '°F';
+
+  const humidityNote = document.getElementById('humidityNote');
+  if (temp < ELECTRIC.balance) {
+    humidityNote.innerText = '(no effect below 45°F — AC isn\'t running)';
+  } else if (humidity < ELECTRIC.humidityObservedMin || humidity > ELECTRIC.humidityObservedMax) {
+    humidityNote.innerText = '(outside observed range ' + ELECTRIC.humidityObservedMin + '-' + ELECTRIC.humidityObservedMax + '%)';
+  } else {
+    humidityNote.innerText = '';
+  }
+
+  const elec = electricDaily(temp, humidity);
+  const gas = gasDaily(temp);
+  const total = elec.cost + gas;
+
+  document.getElementById('elecCost').innerText = '$' + elec.cost.toFixed(2);
+  document.getElementById('elecKwh').innerText = elec.kwh.toFixed(1) + ' kWh/day';
+  document.getElementById('gasCost').innerText = '$' + gas.toFixed(2);
+  document.getElementById('totalCost').innerText = '$' + total.toFixed(2);
+  document.getElementById('monthlyProjection').innerText = '≈ $' + (total*30.4).toFixed(0) + ' projected for a month at this temperature';
+
+  const elecConf = getElectricConfidence(temp);
+  const gasConf = getGasConfidence(temp);
+  const elecBadge = document.getElementById('elecConfidenceBadge');
+  const gasBadge = document.getElementById('gasConfidenceBadge');
+  elecBadge.innerHTML = '<span class="dot" style="background:' + elecConf.color + ';"></span>Electric: ' + elecConf.label + ' <span class="sub">(' + elecConf.sub + ')</span>';
+  gasBadge.innerHTML = '<span class="dot" style="background:' + gasConf.color + ';"></span>Gas: ' + gasConf.label + ' <span class="sub">(' + gasConf.sub + ')</span>';
+
+  const warnBox = document.getElementById('extrapWarning');
+  if (elecConf.level === 'none' || elecConf.level === 'low') {
+    warnBox.innerHTML = '<div class="warning">Electric estimate has ' + elecConf.label.toLowerCase() + ' confidence at this temperature — ' + elecConf.sub + ', so treat it as a rougher guess.</div>';
+  } else if (gasConf.level === 'none') {
+    warnBox.innerHTML = '<div class="warning">Gas estimate is extrapolated at this temperature (outside the 20-77°F range seen in your billing history).</div>';
+  } else {
+    warnBox.innerHTML = '';
+  }
+
+  const pct = 1 - (0.03 * delta);
+  const elecVariable = elec.kwh * ELECTRIC.rate;
+  const adjElecVariable = elecVariable * pct;
+  const adjElecCost = ELECTRIC.fixedPerDay + adjElecVariable;
+  const gasVariable = gas - GAS.floor;
+  const adjGas = (temp >= GAS.balance ? GAS.floor : GAS.floor + gasVariable * pct);
+  const adjTotal = adjElecCost + adjGas;
+
+  document.getElementById('adjustedCost').innerText = '$' + adjTotal.toFixed(2);
+  const diff = adjTotal - total;
+  document.getElementById('deltaVsBase').innerText = (diff >= 0 ? '+' : '') + '$' + diff.toFixed(2) + ' vs. no adjustment';
+
+  const elecDiff = adjElecCost - elec.cost;
+  const gasDiff = adjGas - gas;
+  const fmtDiff = d => (d >= 0 ? '+' : '') + '$' + d.toFixed(2);
+  document.getElementById('deltaBreakdown').innerText =
+    'Electric: $' + adjElecCost.toFixed(2) + ' (' + fmtDiff(elecDiff) + ')   •   Gas: $' + adjGas.toFixed(2) + ' (' + fmtDiff(gasDiff) + ')';
+
+  drawChart(temp, total, humidity);
+
+  const applianceSelect = document.getElementById('applianceSelect');
+  if (applianceSelect && applianceSelect.options.length > 0) {
+    updateApplianceCost();
+  }
+}
+
+// ---------- APPLIANCE COST CALCULATOR ----------
+function appendApplianceOption(a) {
+  const sel = document.getElementById('applianceSelect');
+  if (!sel) return;
+  const opt = document.createElement('option');
+  opt.id = 'applianceOpt-' + a.id;
+  opt.value = a.id;
+  opt.text = a.name + ' (' + a.watts + 'W)';
+  // keep the "Other / custom wattage..." option pinned at the very end
+  const customOpt = sel.querySelector('option[value="custom"]');
+  if (customOpt) sel.insertBefore(opt, customOpt); else sel.appendChild(opt);
+}
+
+function buildApplianceSelect() {
+  const sel = document.getElementById('applianceSelect');
+  allAppliances().forEach(a => {
+    const opt = document.createElement('option');
+    opt.id = 'applianceOpt-' + a.id;
+    opt.value = a.id;
+    opt.text = a.name + ' (' + a.watts + 'W)';
+    sel.appendChild(opt);
+  });
+  const customOpt = document.createElement('option');
+  customOpt.value = 'custom';
+  customOpt.text = 'Other / custom wattage…';
+  sel.appendChild(customOpt);
+}
+
+function updateApplianceCost() {
+  const sel = document.getElementById('applianceSelect');
+  const hours = parseFloat(document.getElementById('applianceHours').value);
+  document.getElementById('applianceHoursLabel').innerText = hours.toFixed(1);
+
+  const customRow = document.getElementById('customWattsRow');
+  let watts;
+  if (sel.value === 'custom') {
+    customRow.style.display = 'block';
+    watts = parseFloat(document.getElementById('customWatts').value) || 0;
+  } else {
+    customRow.style.display = 'none';
+    const appliance = allAppliances().find(a => a.id === sel.value);
+    watts = appliance ? appliance.watts : 0;
+  }
+
+  const kwhDay = (watts * hours) / 1000;
+  const costDay = kwhDay * ELECTRIC.rate; // marginal rate only, no fixed charge
+  const costMonth = costDay * 30.4;
+
+  document.getElementById('applianceDayCost').innerText = '$' + costDay.toFixed(2);
+  document.getElementById('applianceKwhDay').innerText = kwhDay.toFixed(2) + ' kWh/day';
+  document.getElementById('applianceMonthCost').innerText = '$' + costMonth.toFixed(2);
+
+  // context: compare vs. the total home energy bill at the current simulator temp/humidity
+  const temp = parseFloat(document.getElementById('tempSlider').value);
+  const humidity = parseFloat(document.getElementById('humiditySlider').value);
+  const totalMonth = (electricDaily(temp, humidity).cost + gasDaily(temp)) * 30.4;
+  const pct = totalMonth > 0 ? (costMonth / totalMonth * 100) : 0;
+  document.getElementById('applianceShareOfBill').innerText = '≈' + pct.toFixed(1) + '% of your total home energy bill at the current scenario temp';
+}
+
+// ---------- MODEL VS REALITY CHART ----------
+function drawRealityChart() {
+  const svg = document.getElementById('realityChart');
+  if (!svg) return;
+  const W = 700, H = 220, padL = 40, padR = 10, padT = 10, padB = 24;
+  const minT = -10, maxT = 95;
+  let maxKwh = 0;
+  const curvePts = [];
+  for (let t = minT; t <= maxT; t += 2) {
+    const k = electricDaily(t, ELECTRIC.humidityBaseline).kwh;
+    curvePts.push([t, k]);
+    if (k > maxKwh) maxKwh = k;
+  }
+  DAILY_RECORDS.forEach(r => { if (r[3] > maxKwh) maxKwh = r[3]; });
+  maxKwh = Math.ceil(maxKwh / 10) * 10;
+
+  const x = t => padL + (t - minT) / (maxT - minT) * (W - padL - padR);
+  const y = k => H - padB - (k / maxKwh) * (H - padT - padB);
+
+  const path = curvePts.map((p,i) => (i===0 ? 'M' : 'L') + x(p[0]).toFixed(1) + ',' + y(p[1]).toFixed(1)).join(' ');
+  let dots = '';
+  DAILY_RECORDS.forEach(r => {
+    const isNew = r[0] >= SETTINGS_CHANGE_DATE;
+    const color = isNew ? 'var(--bad)' : 'var(--chart-soft)';
+    dots += `<circle cx="${x(r[1]).toFixed(1)}" cy="${y(r[3]).toFixed(1)}" r="2.6" style="fill:${color}" opacity="0.8"/>`;
+  });
+
+  svg.innerHTML = `
+    <line x1="${padL}" y1="${H-padB}" x2="${W-padR}" y2="${H-padB}" style="stroke:var(--chart-grid)" stroke-width="1"/>
+    <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${H-padB}" style="stroke:var(--chart-grid)" stroke-width="1"/>
+    ${dots}
+    <path d="${path}" fill="none" style="stroke:var(--chart-line)" stroke-width="2.5"/>
+    <text x="${padL-6}" y="${padT+4}" font-size="10" style="fill:var(--chart-text)" text-anchor="end">${maxKwh} kWh</text>
+    <text x="${padL-6}" y="${H-padB}" font-size="10" style="fill:var(--chart-text)" text-anchor="end">0</text>
+    <text x="${x(minT)}" y="${H-6}" font-size="10" style="fill:var(--chart-text)" text-anchor="start">${minT}°F</text>
+    <text x="${x(maxT)}" y="${H-6}" font-size="10" style="fill:var(--chart-text)" text-anchor="end">${maxT}°F</text>
+  `;
+}
+
+// ---------- SETTINGS & TEST TRACKER ----------
+function renderSettingsTracker() {
+  const container = document.getElementById('settingsTracker');
+  if (!container) return;
+
+  const log = [...SETTINGS_LOG].sort((a, b) => (a[0] < b[0] ? -1 : 1));
+  let rows = '';
+
+  for (let i = 0; i < log.length; i++) {
+    const [startDate, , notes] = log[i];
+    const endDate = (i + 1 < log.length) ? log[i + 1][0] : null; // null = ongoing, still current
+
+    const daysInPeriod = DAILY_RECORDS.filter(r => r[0] >= startDate && (endDate === null || r[0] < endDate));
+    const n = daysInPeriod.length;
+
+    let cellActual = '—', cellModel = '—', cellDelta = '—', deltaColor = 'var(--sub)';
+    if (n > 0) {
+      const actualKwhAvg = daysInPeriod.reduce((s, r) => s + r[3], 0) / n;
+      const modelKwhAvg = daysInPeriod.reduce((s, r) => s + electricDaily(r[1], r[2]).kwh, 0) / n;
+      const actualCostAvg = ELECTRIC.fixedPerDay + actualKwhAvg * ELECTRIC.rate;
+      const modelCostAvg = ELECTRIC.fixedPerDay + modelKwhAvg * ELECTRIC.rate;
+      const delta = actualCostAvg - modelCostAvg;
+      cellActual = '$' + actualCostAvg.toFixed(2);
+      cellModel = '$' + modelCostAvg.toFixed(2);
+      cellDelta = (delta >= 0 ? '+' : '') + '$' + delta.toFixed(2) + '/day';
+      deltaColor = delta <= 0 ? 'var(--good)' : 'var(--bad)';
+    }
+
+    const periodLabel = startDate + (endDate ? ' → ' + endDate : ' → present');
+    const sampleNote = n === 0 ? 'no real data yet' : (n < 5 ? n + ' real days (low confidence)' : n + ' real days');
+
+    rows += `<div class="tracker-period">
+      <div class="tp-head"><span>${periodLabel}</span><span class="tp-sample">${sampleNote}</span></div>
+      <div class="note" style="margin-top:2px;">${notes}</div>
+      <div class="tp-stats">
+        <span><span class="tp-label">Actual</span> ${cellActual}</span>
+        <span><span class="tp-label">Model</span> ${cellModel}</span>
+        <span style="color:${deltaColor}; font-weight:650;">${cellDelta}</span>
+      </div>
+    </div>`;
+  }
+
+  container.innerHTML = rows;
+}
+
+// Month-by-month electric actual-vs-model track record — computed purely from
+// DAILY_RECORDS (no new data file needed), one bar per calendar month with any
+// metered days. Electric only: gas is billed monthly, not metered daily, so
+// there's no real day-level gas actual to hold the model to. Same bar+tick+tap
+// visual language as the "Metered Days" chart, just at month grain.
+let selectedMonthlyIdx = null, monthlyAccuracyAnimate = true;
+
+function selectMonthlyAccuracy(i) {
+  selectedMonthlyIdx = (selectedMonthlyIdx === i) ? null : i;
+  monthlyAccuracyAnimate = false;
+  renderMonthlyAccuracy();
+}
+
+function computeMonthlyAccuracyRows() {
+  const byMonth = {};
+  DAILY_RECORDS.forEach(r => {
+    const ym = r[0].slice(0, 7);
+    if (!byMonth[ym]) byMonth[ym] = { n: 0, actual: 0, model: 0 };
+    byMonth[ym].n += 1;
+    byMonth[ym].actual += actualElecCost(r[3]);
+    byMonth[ym].model += electricDaily(r[1], r[2]).cost;
+  });
+  const MONTH_NAMES_FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  return Object.keys(byMonth).sort().map(ym => {
+    const b = byMonth[ym];
+    const [y, mm] = ym.split('-');
+    return {
+      ym, n: b.n,
+      actual: b.actual / b.n,
+      model: b.model / b.n,
+      label: MONTH_NAMES_FULL[parseInt(mm, 10) - 1].slice(0, 3) + ' ' + y.slice(2)
+    };
+  });
+}
+
+function renderMonthlyAccuracy() {
+  const svg = document.getElementById('monthlyAccuracyChart');
+  const detail = document.getElementById('monthlyAccuracyDetail');
+  if (!svg) return;
+  const rows = computeMonthlyAccuracyRows();
+  if (!rows.length) { svg.innerHTML = ''; if (detail) detail.innerHTML = '<div class="note">Not enough data yet.</div>'; return; }
+
+  const W = 700, H = 220, padL = 40, padR = 10, padT = 16, padB = 26;
+  let maxC = 0;
+  rows.forEach(r => { if (r.actual > maxC) maxC = r.actual; if (r.model > maxC) maxC = r.model; });
+  maxC = Math.ceil(maxC / 2) * 2;
+  const n = rows.length;
+  const slot = (W - padL - padR) / n;
+  const barW = Math.min(34, slot * 0.6);
+  const y = c => H - padB - (c / maxC) * (H - padT - padB);
+  const anim = monthlyAccuracyAnimate ? ' animate' : '';
+
+  let out = `
+    <line x1="${padL}" y1="${H - padB}" x2="${W - padR}" y2="${H - padB}" style="stroke:var(--chart-grid)"/>
+    <text x="${padL - 6}" y="${padT + 4}" font-size="10" style="fill:var(--chart-text)" text-anchor="end">$${maxC}</text>
+    <text x="${padL - 6}" y="${H - padB}" font-size="10" style="fill:var(--chart-text)" text-anchor="end">$0</text>`;
+  rows.forEach((r, i) => {
+    const cx = padL + slot * i + slot / 2;
+    const bx = cx - barW / 2;
+    const sel = selectedMonthlyIdx === i;
+    const dim = selectedMonthlyIdx !== null && !sel;
+    const fill = sel ? 'var(--chart-line)' : 'var(--chart-soft)';
+    out += `<rect class="bar${anim}" x="${bx.toFixed(1)}" y="${y(r.actual).toFixed(1)}" width="${barW.toFixed(1)}" height="${(H - padB - y(r.actual)).toFixed(1)}" rx="3" style="fill:${fill};${dim ? 'opacity:0.4;' : ''} animation-delay:${(i * 35)}ms"/>`;
+    out += `<line x1="${(cx - barW / 2 - 3).toFixed(1)}" y1="${y(r.model).toFixed(1)}" x2="${(cx + barW / 2 + 3).toFixed(1)}" y2="${y(r.model).toFixed(1)}" style="stroke:var(--chart-strong);${dim ? 'opacity:0.4;' : ''}" stroke-width="2"/>`;
+    out += `<text x="${cx.toFixed(1)}" y="${H - padB + 14}" font-size="9" style="fill:var(--chart-text)" text-anchor="middle">${r.label}</text>`;
+    out += `<rect class="tapzone" x="${(padL + slot * i).toFixed(1)}" y="${padT}" width="${slot.toFixed(1)}" height="${(H - padT - padB).toFixed(1)}" fill="transparent" onclick="selectMonthlyAccuracy(${i})"/>`;
+  });
+  svg.innerHTML = out;
+  monthlyAccuracyAnimate = false;
+
+  if (detail) {
+    if (selectedMonthlyIdx !== null && rows[selectedMonthlyIdx]) {
+      const r = rows[selectedMonthlyIdx];
+      const delta = r.actual - r.model;
+      const dc = delta <= 0 ? 'var(--good)' : 'var(--bad)';
+      detail.innerHTML = `<div class="day-detail">
+        <strong>${r.label}</strong> — $${r.actual.toFixed(2)}/day actual · ${r.n} metered day${r.n === 1 ? '' : 's'}
+        <div class="note" style="margin-top:3px;">Model expected $${r.model.toFixed(2)}/day for that month's real weather → <span style="color:${dc}; font-weight:650;">${delta >= 0 ? '+' : '−'}$${Math.abs(delta).toFixed(2)}/day</span> vs. expected</div>
+      </div>`;
+    } else {
+      detail.innerHTML = '';
+    }
+  }
+}
+
+// ---------- DATA STALENESS BANNER ----------
+function renderDataStaleness() {
+  const row = document.getElementById('dataStalenessRow');
+  if (!row) return;
+  const now = new Date();
+  function daysSince(dateStr) {
+    const d = new Date(dateStr + 'T00:00:00');
+    return Math.floor((now - d) / (1000 * 60 * 60 * 24));
+  }
+  const sources = [
+    { label: 'Electric', date: LAST_DATA_DATES.aep, staleAt: 4, veryStaleAt: 10 },
+    { label: 'Sensors', date: LAST_DATA_DATES.sensors, staleAt: 3, veryStaleAt: 14 },
+    { label: 'Gas', date: LAST_DATA_DATES.gas, staleAt: 40, veryStaleAt: 60 }
+  ];
+  let pills = '';
+  sources.forEach(s => {
+    const days = daysSince(s.date);
+    if (days <= s.staleAt) return; // current — stay quiet
+    const color = days <= s.veryStaleAt ? 'var(--warn)' : 'var(--bad)';
+    const word = days <= s.veryStaleAt ? 'aging' : 'stale';
+    pills += `<span class="confidence-badge"><span class="dot" style="background:${color};"></span>${s.label}: ${days} days old <span class="sub">(${word})</span></span>`;
+  });
+  if (pills) {
+    row.innerHTML = pills;
+  } else {
+    const worst = Math.max(...sources.map(s => daysSince(s.date)));
+    row.innerHTML = `<span class="all-current"><span class="dot" style="background:var(--good);"></span>All data current</span>`;
+  }
+}
+
+// ---------- SEASONAL COST CALENDAR ----------
+function renderSeasonalCalendar() {
+  const container = document.getElementById('seasonalCalendar');
+  if (!container) return;
+  let rows = '';
+  MONTHLY_RECORDS.forEach(m => {
+    const [name, avgTemp, avgHumidity, avgKwh, nDays, avgGasCostDay, nGas] = m;
+    const actualElec = ELECTRIC.fixedPerDay + avgKwh * ELECTRIC.rate;
+    const modelElec = electricDaily(avgTemp, avgHumidity).cost;
+    const modelGas = gasDaily(avgTemp);
+    const actualGas = (avgGasCostDay !== null && avgGasCostDay !== undefined) ? avgGasCostDay : modelGas;
+    const actualTotal = actualElec + actualGas;
+    const modelTotal = modelElec + modelGas;
+    rows += `<tr><td>${name}</td><td>${avgTemp.toFixed(0)}°F</td><td>$${actualTotal.toFixed(2)}</td><td>$${modelTotal.toFixed(2)}</td><td>${nDays}d / ${nGas}mo</td></tr>`;
+  });
+  container.innerHTML = `
+    <table class="mini-table">
+      <tr><th>Month</th><th>Avg Temp</th><th>Actual $/day</th><th>Model $/day</th><th>Sample</th></tr>
+      ${rows}
+    </table>
+    <div class="note" style="margin-top:8px;">"Actual" uses your real average kWh and gas billing for that month. "Model" is what the temp/humidity model alone predicts — close agreement between the two columns is a good sign the model generalizes across seasons.</div>
+  `;
+}
+
+// ---------- OUTAGE PLANNER ----------
+const SOLAR = { ratedWatts: 400, realWorldEfficiency: 0.65, station: "kitchen" };
+
+function stationOptionsHtml(selectedId) {
+  return STATIONS.map(s => `<option value="${s.id}" ${s.id === selectedId ? 'selected' : ''}>${s.name}</option>`).join('');
+}
+
+function egoBatteryOptionsHtml(selectedId) {
+  return EGO_BATTERY_SIZES.map(z => `<option value="${z.id}" ${z.id === selectedId ? 'selected' : ''}>${z.label}</option>`).join('');
+}
+
+function makeBatteryRowEl(b) {
+  const div = document.createElement('div');
+  div.className = 'item';
+  div.id = 'row-battery-' + b.id;
+  const qtyControl = b.qty ? `<input type="number" class="qty-input" id="qty-${b.id}" value="${b.qty}" min="0" max="10" onchange="updateOutage()">` : '';
+  const chargeControl = `<input type="number" class="charge-input" id="charge-${b.id}" value="100" min="0" max="100" onchange="updateOutage()">%`;
+  const removeBtn = b.custom ? `<button class="remove-item-btn" onclick="removeCustomBattery('${b.id}')" aria-label="Remove">&times;</button>` : '';
+  const infoBtn = b.note ? `<span class="info-btn" onclick="toggleNote('${b.id}')" title="More info">i</span>` : '';
+  const noteDiv = b.note ? `<div class="note appliance-note" id="note-${b.id}" style="flex-basis:100%; display:none;">${b.note}</div>` : '';
+  const wattsCell = b.egoSelect
+    ? `Battery: <select id="egobattery-${b.id}" onchange="updateOutage()">${egoBatteryOptionsHtml(EGO_BATTERY_SIZES[0].id)}</select> ${chargeControl}`
+    : `${b.wh} Wh${b.qty ? ' each' : ''} ${chargeControl}`;
+  div.innerHTML = `
+    <div class="item-left">
+      <input type="checkbox" id="chk-${b.id}" ${b.defaultChecked ? 'checked' : ''} onchange="updateOutage()">
+      <span>${b.name}${qtyControl}</span>
+      ${infoBtn}
+      ${removeBtn}
+    </div>
+    <span class="watts">${wattsCell}</span>
+    <div style="flex-basis:100%; margin-top:4px;">
+      <label style="font-size:0.78rem; color:var(--sub);">Stationed at: <select id="station-${b.id}" onchange="updateOutage()">${stationOptionsHtml(b.station)}</select></label>
+    </div>
+    ${noteDiv}
+  `;
+  return div;
+}
+
+function buildBatteryList() {
+  const container = document.getElementById('batteryList');
+  container.innerHTML = '';
+  allBatteries().forEach(b => container.appendChild(makeBatteryRowEl(b)));
+}
+
+function addCustomBattery() {
+  const nameEl = document.getElementById('newBatteryName');
+  const whEl = document.getElementById('newBatteryWh');
+  const stationEl = document.getElementById('newBatteryStation');
+  const name = (nameEl.value || '').trim();
+  const wh = parseFloat(whEl.value);
+  if (!name || !wh || wh <= 0) {
+    alert('Give the battery a name and a capacity in Wh above 0.');
+    return;
+  }
+  const b = { id: 'custom-' + Date.now(), name, wh, defaultChecked: false, station: stationEl.value || STATIONS[0].id, custom: true };
+  CUSTOM_BATTERIES.push(b);
+  saveCustomList('hp_customBatteries', CUSTOM_BATTERIES);
+  document.getElementById('batteryList').appendChild(makeBatteryRowEl(b));
+  nameEl.value = ''; whEl.value = '';
+  if (typeof refreshSliderFills === 'function') refreshSliderFills();
+  updateOutage();
+}
+
+function removeCustomBattery(id) {
+  CUSTOM_BATTERIES = CUSTOM_BATTERIES.filter(b => b.id !== id);
+  saveCustomList('hp_customBatteries', CUSTOM_BATTERIES);
+  const row = document.getElementById('row-battery-' + id);
+  if (row) row.remove();
+  updateOutage();
+}
+
+function makeApplianceRowEl(a) {
+  const div = document.createElement('div');
+  div.className = 'item';
+  div.id = 'row-appliance-' + a.id;
+  const removeBtn = a.custom ? `<button class="remove-item-btn" onclick="removeCustomAppliance('${a.id}')" aria-label="Remove">&times;</button>` : '';
+  const wattsCell = a.cupsMode
+    ? `Cups: <input type="number" class="qty-input" id="cups-${a.id}" value="0" min="0" max="24" onchange="updateOutage()">`
+    : a.minutesMode
+    ? `Minutes/day: <input type="number" class="qty-input" id="minutes-${a.id}" value="0" min="0" max="180" onchange="updateOutage()">`
+    : `${a.watts} W`;
+  div.innerHTML = `
+    <div class="item-left">
+      <input type="checkbox" id="chk-${a.id}" ${a.defaultChecked ? 'checked' : ''} onchange="updateOutage()">
+      <span>${a.name}</span>
+      <span class="tag ${a.tag}">${a.tag}</span>
+      ${a.note ? `<button class="info-btn" onclick="toggleNote('${a.id}')" aria-label="More info">i</button>` : ''}
+      ${removeBtn}
+    </div>
+    <span class="watts">${wattsCell}</span>
+    <div style="flex-basis:100%; margin-top:4px;">
+      <label style="font-size:0.78rem; color:var(--sub);">Located at: <select id="station-${a.id}" onchange="updateOutage()">${stationOptionsHtml(a.station)}</select></label>
+    </div>
+    ${a.note ? `<div class="note appliance-note" id="note-${a.id}" style="flex-basis:100%; display:none;">${a.note}</div>` : ''}
+  `;
+  return div;
+}
+
+function makeEgoDirectRowEl(d) {
+  const div = document.createElement('div');
+  div.className = 'item';
+  div.id = 'row-egodirect-' + d.id;
+  div.innerHTML = `
+    <div class="item-left">
+      <input type="checkbox" id="chk-${d.id}" onchange="updateOutage()">
+      <span>${d.name}</span>
+      ${d.note ? `<span class="info-btn" onclick="toggleNote('${d.id}')" title="More info">i</span>` : ''}
+    </div>
+    <span class="watts">${d.watts} W</span>
+    <div style="flex-basis:100%; margin-top:4px;">
+      <label style="font-size:0.78rem; color:var(--sub);">Battery: <select id="egobattery-${d.id}" onchange="updateOutage()">${egoBatteryOptionsHtml(EGO_BATTERY_SIZES[0].id)}</select></label>
+      <span id="runtime-${d.id}" style="font-size:0.78rem; color:var(--sub); margin-left:8px;"></span>
+    </div>
+    ${d.note ? `<div class="note appliance-note" id="note-${d.id}" style="flex-basis:100%; display:none;">${d.note}</div>` : ''}
+  `;
+  return div;
+}
+
+function buildEgoDirectList() {
+  const container = document.getElementById('egoDirectList');
+  if (!container) return;
+  container.innerHTML = '';
+  EGO_DIRECT_DEVICES.forEach(d => container.appendChild(makeEgoDirectRowEl(d)));
+}
+
+function buildApplianceList() {
+  const container = document.getElementById('applianceList');
+  container.innerHTML = '';
+  allAppliances().forEach(a => container.appendChild(makeApplianceRowEl(a)));
+}
+
+function addCustomAppliance() {
+  const nameEl = document.getElementById('newApplianceName');
+  const wattsEl = document.getElementById('newApplianceWatts');
+  const stationEl = document.getElementById('newApplianceStation');
+  const name = (nameEl.value || '').trim();
+  const watts = parseFloat(wattsEl.value);
+  if (!name || !watts || watts <= 0) {
+    alert('Give the device a name and a wattage above 0.');
+    return;
+  }
+  const a = { id: 'custom-' + Date.now(), name, watts, tag: 'nice', defaultChecked: false, station: stationEl.value || STATIONS[0].id, custom: true };
+  CUSTOM_APPLIANCES.push(a);
+  saveCustomList('hp_customAppliances', CUSTOM_APPLIANCES);
+  document.getElementById('applianceList').appendChild(makeApplianceRowEl(a));
+  appendApplianceOption(a);
+  nameEl.value = ''; wattsEl.value = '';
+  if (typeof refreshSliderFills === 'function') refreshSliderFills();
+  updateOutage();
+}
+
+function removeCustomAppliance(id) {
+  CUSTOM_APPLIANCES = CUSTOM_APPLIANCES.filter(a => a.id !== id);
+  saveCustomList('hp_customAppliances', CUSTOM_APPLIANCES);
+  const row = document.getElementById('row-appliance-' + id);
+  if (row) row.remove();
+  const opt = document.getElementById('applianceOpt-' + id);
+  if (opt) opt.remove();
+  updateOutage();
+}
+
+function setChecked(id, val) {
+  const el = document.getElementById('chk-' + id);
+  if (el) el.checked = val;
+}
+
+function setStation(id, stationId) {
+  const el = document.getElementById('station-' + id);
+  if (el) el.value = stationId;
+}
+
+function applyOutagePreset(kind) {
+  // reset all first - checked state AND station, so a previous preset's room
+  // moves (e.g. Short's Delta 3 -> Kitchen) don't leak into the next one
+  allBatteries().forEach(b => { setChecked(b.id, false); setStation(b.id, b.station); });
+  allAppliances().forEach(a => { setChecked(a.id, false); setStation(a.id, a.station); });
+  EGO_DIRECT_DEVICES.forEach(d => setChecked(d.id, false));
+  const solarChk = document.getElementById('chk-solar');
+  if (solarChk) solarChk.checked = false;
+  setStation('solar', SOLAR.station);
+
+  if (kind === 'short') {
+    // Fridge only - the Delta 3 is light enough to carry to the kitchen for this,
+    // no need to move the heavy Delta Pro for a short, likely-to-resolve outage.
+    setChecked('delta3', true); setStation('delta3', 'kitchen');
+    setChecked('mainfridge', true); // already stationed in Kitchen
+
+  } else if (kind === 'extended' || kind === 'storm') {
+    // Real ceiling on this system is ~24 hours. Fridge is the vital load, kept on
+    // the Delta Pro alone (no freezer) to stretch it as long as possible. Everything
+    // else is a per-room deployment of the smaller batteries.
+    setChecked('deltapro', true); // Kitchen (default)
+    setChecked('mainfridge', true);
+
+    setChecked('river2', true); setStation('river2', 'riley');
+    setChecked('fan', true); setStation('fan', 'riley');
+    setChecked('phones-riley', true); // already stationed in Riley's Room
+
+    setChecked('anker', true); setStation('anker', 'kids');
+    setChecked('phones-kids', true); // already stationed in Sophia & Teagan's Room
+
+    // Delta 3 - Living Room or Master Bedroom, whichever it actually ends up in that
+    // day. Defaults to Living Room; flip its station dropdown if it's moved upstairs.
+    setChecked('delta3', true);
+    setChecked('lights', true);
+    setChecked('phones', true);
+    setChecked('tv', true);
+
+    if (kind === 'storm') {
+      // Unknown duration - maximize what's deployed and add solar to the station
+      // that benefits most (the fridge, since it's the priority load).
+      if (solarChk) { solarChk.checked = true; setStation('solar', 'kitchen'); }
+    }
+  }
+  updateOutage();
+}
+
+function updateOutage() {
+  // ---- gather battery capacity, grouped by station ----
+  const stationWh = {};
+  STATIONS.forEach(s => stationWh[s.id] = 0);
+  let totalWh = 0;
+  allBatteries().forEach(b => {
+    const chkEl = document.getElementById('chk-' + b.id);
+    if (chkEl && chkEl.checked) {
+      const chargeEl = document.getElementById('charge-' + b.id);
+      const chargePct = chargeEl ? Math.max(0, Math.min(100, parseFloat(chargeEl.value) || 0)) : 100;
+      let wh;
+      if (b.egoSelect) {
+        const sizeEl = document.getElementById('egobattery-' + b.id);
+        const size = EGO_BATTERY_SIZES.find(z => z.id === (sizeEl ? sizeEl.value : EGO_BATTERY_SIZES[0].id)) || EGO_BATTERY_SIZES[0];
+        wh = size.wh * (chargePct / 100);
+      } else {
+        const qtyEl = document.getElementById('qty-' + b.id);
+        const qty = qtyEl ? parseInt(qtyEl.value || '0', 10) : 1;
+        wh = b.wh * qty * (chargePct / 100);
+      }
+      const stationEl = document.getElementById('station-' + b.id);
+      const stationId = stationEl ? stationEl.value : b.station;
+      stationWh[stationId] = (stationWh[stationId] || 0) + wh;
+      totalWh += wh;
+    }
+  });
+
+  // ---- gather load, grouped by station ----
+  const stationW = {};
+  const stationAppliances = {};
+  const stationOneTimeWh = {};
+  STATIONS.forEach(s => { stationW[s.id] = 0; stationAppliances[s.id] = []; stationOneTimeWh[s.id] = 0; });
+  let totalW = 0;
+  let heaterOn = false;
+  allAppliances().forEach(a => {
+    const chkEl = document.getElementById('chk-' + a.id);
+    if (chkEl && chkEl.checked) {
+      const stationEl = document.getElementById('station-' + a.id);
+      const stationId = stationEl ? stationEl.value : a.station;
+      if (a.cupsMode) {
+        // one-time brew energy, not a continuous load - doesn't add to stationW/totalW
+        const cupsEl = document.getElementById('cups-' + a.id);
+        const cups = cupsEl ? Math.max(0, parseInt(cupsEl.value || '0', 10)) : 0;
+        stationOneTimeWh[stationId] = (stationOneTimeWh[stationId] || 0) + cups * (a.whPerCup || 0);
+      } else if (a.minutesMode) {
+        // one-time burst energy (e.g. microwave) - real draw only while actively running, not continuous
+        const minutesEl = document.getElementById('minutes-' + a.id);
+        const minutes = minutesEl ? Math.max(0, parseFloat(minutesEl.value || '0')) : 0;
+        stationOneTimeWh[stationId] = (stationOneTimeWh[stationId] || 0) + (minutes / 60) * (a.runningWatts || 0);
+      } else {
+        stationW[stationId] = (stationW[stationId] || 0) + a.watts;
+        stationAppliances[stationId].push(a);
+        totalW += a.watts;
+        if (a.id === 'heater') heaterOn = true;
+      }
+    }
+  });
+
+  // ---- EGO native tools: each runs off its own EGO battery, no inverter/station pool involved ----
+  EGO_DIRECT_DEVICES.forEach(d => {
+    const chkEl = document.getElementById('chk-' + d.id);
+    const runtimeEl = document.getElementById('runtime-' + d.id);
+    if (!runtimeEl) return;
+    if (chkEl && chkEl.checked) {
+      const sizeEl = document.getElementById('egobattery-' + d.id);
+      const size = EGO_BATTERY_SIZES.find(z => z.id === (sizeEl ? sizeEl.value : EGO_BATTERY_SIZES[0].id)) || EGO_BATTERY_SIZES[0];
+      const hours = size.wh / d.watts;
+      runtimeEl.innerText = '\u2248 ' + hours.toFixed(1) + 'h on a ' + size.label.split(' - ')[0] + ' battery';
+    } else {
+      runtimeEl.innerText = '';
+    }
+  });
+
+  document.getElementById('totalWh').innerText = Math.round(totalWh).toLocaleString() + ' Wh';
+  document.getElementById('totalLoadW').innerText = totalW + ' W';
+
+  const heaterWarnBox = document.getElementById('heaterWarning');
+  heaterWarnBox.innerHTML = heaterOn
+    ? '<div class="danger">Portable electric heater selected — this alone can drain a Delta Pro in about 3 hours. Not a good default (the gas log fireplace is the better everyday backup heat source) - but a brief run to protect pipes during a short, likely-to-resolve cold-weather outage is a reasonable call. Just don\'t treat it as a normal/extended-use option.</div>'
+    : '';
+
+  // ---- solar: feeds exactly one station's battery, not the whole house ----
+  const solarChk = document.getElementById('chk-solar');
+  const solarHoursRow = document.getElementById('solarHoursRow');
+  const solarOn = solarChk && solarChk.checked;
+  solarHoursRow.style.display = solarOn ? 'block' : 'none';
+  const solarNote = document.getElementById('solarContribution');
+  if (solarOn) {
+    const sunHours = parseFloat(document.getElementById('solarHours').value);
+    document.getElementById('solarHoursLabel').innerText = sunHours;
+    const solarWhPerDay = SOLAR.ratedWatts * SOLAR.realWorldEfficiency * sunHours;
+    const solarStationEl = document.getElementById('station-solar');
+    const solarStationId = solarStationEl ? solarStationEl.value : SOLAR.station;
+    const stationName = (STATIONS.find(s => s.id === solarStationId) || {}).name || solarStationId;
+    const stationLoad = stationW[solarStationId] || 0;
+    if (stationLoad > 0) {
+      const extraHoursPerDay = solarWhPerDay / stationLoad;
+      solarNote.innerText = '☀️ Adds roughly ' + solarWhPerDay.toFixed(0) + ' Wh/day (~' + extraHoursPerDay.toFixed(1) + ' extra hours/day) to the ' + stationName + ' station only — it can\'t help other stations.';
+    } else {
+      solarNote.innerText = '☀️ Adds roughly ' + solarWhPerDay.toFixed(0) + ' Wh/day to the ' + stationName + ' station (no load currently assigned there to offset).';
+    }
+  } else {
+    solarNote.innerText = '';
+  }
+
+  // ---- per-station runtime + load-shedding suggestions ----
+  const breakdown = document.getElementById('stationBreakdown');
+  const suggestionBox = document.getElementById('suggestionBox');
+  const targetSlider = document.getElementById('targetHours');
+  const targetHours = targetSlider ? parseFloat(targetSlider.value) : 24;
+  if (targetSlider) document.getElementById('targetHoursLabel').innerText = targetHours;
+
+  let rows = '';
+  let suggestionHtml = '';
+  let anyStationShown = false;
+
+  STATIONS.forEach(s => {
+    const wh = stationWh[s.id] || 0;
+    const w = stationW[s.id] || 0;
+    const oneTimeWh = stationOneTimeWh[s.id] || 0;
+    if (wh <= 0 && w <= 0 && oneTimeWh <= 0) return; // nothing assigned here — leave it out of the table entirely
+    anyStationShown = true;
+    const usableWh = Math.max(0, wh * 0.9 - oneTimeWh);
+
+    if (oneTimeWh > 0) {
+      suggestionHtml += `<div class="note" style="margin-bottom:6px;">\u26A1 <strong>${s.name}</strong>: reserves ~${Math.round(oneTimeWh)} Wh up front for short-burst devices (coffee, microwave, etc. - one-time, not counted in the ongoing load above).</div>`;
+    }
+
+    let hoursStr, statusColor, hoursVal = null;
+    if (w <= 0) {
+      hoursStr = '— (no load here)';
+      statusColor = 'var(--sub)';
+    } else if (wh <= 0) {
+      hoursStr = '0h — no battery here';
+      statusColor = 'var(--bad)';
+      hoursVal = 0;
+    } else {
+      hoursVal = usableWh / w;
+      hoursStr = hoursVal.toFixed(1) + 'h (≈' + (hoursVal / 24).toFixed(1) + 'd)';
+      statusColor = hoursVal >= 24 ? 'var(--good)' : (hoursVal >= 10 ? 'var(--warn)' : 'var(--bad)');
+    }
+
+    rows += `<tr><td>${s.name}</td><td>${Math.round(wh).toLocaleString()} Wh</td><td>${w} W</td><td style="color:${statusColor}; font-weight:600;">${hoursStr}</td></tr>`;
+
+    if (w > 0) {
+      if (wh <= 0) {
+        suggestionHtml += `<div class="warning" style="margin-bottom:6px;"><strong>${s.name}</strong>: no battery is stationed here — this load has no power source until one is assigned or moved in.</div>`;
+      } else {
+        const maxSustainableW = usableWh / targetHours;
+        if (w <= maxSustainableW) {
+          suggestionHtml += `<div class="note" style="color:var(--good); font-weight:600; margin-bottom:6px;">✓ <strong>${s.name}</strong>: already meets the ${targetHours}h target (${hoursVal.toFixed(1)}h).</div>`;
+        } else {
+          const droppable = stationAppliances[s.id].filter(a => a.tag !== 'essential').sort((a, b) => {
+            const order = { avoid: 0, nice: 1 };
+            if (order[a.tag] !== order[b.tag]) return order[a.tag] - order[b.tag];
+            return b.watts - a.watts;
+          });
+          let remainingW = w;
+          const toDrop = [];
+          for (const a of droppable) {
+            if (remainingW <= maxSustainableW) break;
+            remainingW -= a.watts;
+            toDrop.push(a);
+          }
+          if (remainingW <= maxSustainableW && toDrop.length > 0 && remainingW > 0) {
+            const newHours = usableWh / remainingW;
+            suggestionHtml += `<div class="note" style="margin-bottom:6px;"><strong>${s.name}</strong>: to hit ${targetHours}h, consider unplugging <strong>${toDrop.map(a => a.name).join(', ')}</strong> — brings load to ${remainingW}W, stretches runtime to ~${newHours.toFixed(1)}h.</div>`;
+          } else if (remainingW <= 0 && toDrop.length > 0) {
+            suggestionHtml += `<div class="note" style="margin-bottom:6px;"><strong>${s.name}</strong>: unplugging <strong>${toDrop.map(a => a.name).join(', ')}</strong> would clear every load here — nothing left running to limit runtime at this station.</div>`;
+          } else {
+            suggestionHtml += `<div class="warning" style="margin-bottom:6px;"><strong>${s.name}</strong>: even dropping every non-essential load here isn't enough to hit ${targetHours}h with the battery capacity currently stationed there — needs more capacity or fewer essentials running in this station.</div>`;
+          }
+        }
+      }
+    }
+  });
+
+  if (!anyStationShown) {
+    breakdown.innerHTML = '<div class="note">Select at least one battery and one load to see a runtime breakdown by station.</div>';
+    suggestionBox.innerHTML = '';
+    return;
+  }
+
+  breakdown.innerHTML = `
+    <table class="mini-table">
+      <tr><th>Station</th><th>Battery Wh here</th><th>Load W here</th><th>Est. runtime</th></tr>
+      ${rows}
+    </table>
+  `;
+  suggestionBox.innerHTML = suggestionHtml || '<div class="note">No station currently has both a battery and a load selected.</div>';
+}
+
+function toggleNote(id) {
+  const el = document.getElementById('note-' + id);
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+// ---------- TODAY VIEW ----------
+function fmtDateNice(dateStr) {
+  const d = new Date(dateStr + 'T12:00:00');
+  return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+}
+
+function actualElecCost(kwh) { return ELECTRIC.fixedPerDay + kwh * ELECTRIC.rate; }
+
+function renderTodayHero() {
+  const el = document.getElementById('todayHero');
+  if (!el || !DAILY_RECORDS.length) return;
+  const rec = DAILY_RECORDS[DAILY_RECORDS.length - 1];
+  const date = rec[0], t = rec[1], h = rec[2], kwh = rec[3];
+  const actual = actualElecCost(kwh);
+  const model = electricDaily(t, h).cost;
+  const delta = actual - model;
+  const gasEst = gasDaily(t);
+  let verdict, color;
+  if (Math.abs(delta) < 0.75) { verdict = 'right in line with what the model expected for that weather'; color = 'var(--good)'; }
+  else if (delta > 0) { verdict = '$' + delta.toFixed(2) + ' above what the model expected for that weather'; color = 'var(--bad)'; }
+  else { verdict = '$' + Math.abs(delta).toFixed(2) + ' below what the model expected for that weather'; color = 'var(--good)'; }
+  const dAge = Math.floor((new Date() - new Date(date + 'T00:00:00')) / 86400000);
+  const ageNote = dAge > 1 ? ' (' + dAge + ' days ago — AEP exports lag a bit)' : '';
+  el.innerHTML = `
+    <div class="hero-row">
+      <div class="big-number">$${actual.toFixed(2)}</div>
+      <div class="hero-date">${fmtDateNice(date)}${ageNote}</div>
+    </div>
+    <div class="note">${kwh.toFixed(1)} kWh electric · avg ${t.toFixed(0)}°F outside, ${h.toFixed(0)}% humidity · plus ~$${gasEst.toFixed(2)} estimated gas</div>
+    <div class="delta-line" style="color:${color};">${delta >= 0 ? '▲' : '▼'} ${verdict}</div>
+  `;
+  // count-up animation on the hero number
+  if (typeof requestAnimationFrame === 'function' && typeof matchMedia === 'function'
+      && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const numEl = el.querySelector('.big-number');
+    if (numEl) {
+      const target = actual, t0 = performance.now(), dur = 650;
+      (function tick(t) {
+        const p = Math.min(1, (t - t0) / dur);
+        const eased = 1 - Math.pow(1 - p, 3);
+        numEl.textContent = '$' + (target * eased).toFixed(2);
+        if (p < 1) requestAnimationFrame(tick);
+      })(t0);
+    }
+  }
+}
+
+function renderAlertStrip() {
+  const el = document.getElementById('alertStrip');
+  if (!el) return;
+  const now = new Date();
+  const daysOld = s => Math.floor((now - new Date(s + 'T00:00:00')) / 86400000);
+  const alerts = [];
+  if (daysOld(LAST_DATA_DATES.aep) > 6) alerts.push('Electric data is ' + daysOld(LAST_DATA_DATES.aep) + ' days old — grab a fresh AEP export when you get a chance.');
+  if (daysOld(LAST_DATA_DATES.sensors) > 3) alerts.push('No sensor readings for ' + daysOld(LAST_DATA_DATES.sensors) + ' days — run the Home Temp Report Shortcut.');
+  if (daysOld(LAST_DATA_DATES.gas) > 45) alerts.push('Gas billing is ' + daysOld(LAST_DATA_DATES.gas) + ' days old — log the latest bill when it arrives.');
+  if (DAILY_RECORDS.length) {
+    const r = DAILY_RECORDS[DAILY_RECORDS.length - 1];
+    const delta = actualElecCost(r[3]) - electricDaily(r[1], r[2]).cost;
+    if (delta > 2) alerts.push('Latest metered day ran $' + delta.toFixed(2) + ' above the model — worth thinking about what was running on ' + fmtDateNice(r[0]) + '.');
+  }
+  el.innerHTML = alerts.map(a => '<div class="warning" style="margin-top:0; margin-bottom:8px;">' + a + '</div>').join('');
+}
+
+let recentOffset = 0, selectedRecentIdx = null, recentAnimate = true;
+
+function shiftRecent(dir) {
+  const N = 14, maxOff = Math.max(0, DAILY_RECORDS.length - N);
+  const next = Math.min(maxOff, Math.max(0, recentOffset + dir * N));
+  if (next === recentOffset) return;
+  recentOffset = next;
+  selectedRecentIdx = null;
+  recentAnimate = true;
+  renderRecentChart();
+}
+
+function selectRecentDay(i) {
+  selectedRecentIdx = (selectedRecentIdx === i) ? null : i;
+  recentAnimate = false;
+  renderRecentChart();
+}
+
+function renderRecentChart() {
+  const svg = document.getElementById('recentChart');
+  if (!svg || !DAILY_RECORDS.length) return;
+  const N = 14, total = DAILY_RECORDS.length;
+  const maxOff = Math.max(0, total - N);
+  if (recentOffset > maxOff) recentOffset = maxOff;
+  const end = total - recentOffset;
+  const startI = Math.max(0, end - N);
+  const recs = DAILY_RECORDS.slice(startI, end);
+
+  const fmtShort = ds => new Date(ds + 'T12:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  const rangeEl = document.getElementById('recentRange');
+  if (rangeEl) rangeEl.innerText = fmtShort(recs[0][0]) + ' – ' + fmtShort(recs[recs.length - 1][0]);
+  const older = document.getElementById('chevOlder'), newer = document.getElementById('chevNewer');
+  if (older) older.disabled = recentOffset >= maxOff;
+  if (newer) newer.disabled = recentOffset === 0;
+
+  const W = 700, H = 240, padL = 40, padR = 10, padT = 16, padB = 30;
+  let maxC = 0;
+  const rows = recs.map(r => {
+    const actual = actualElecCost(r[3]);
+    const model = electricDaily(r[1], r[2]).cost;
+    if (actual > maxC) maxC = actual;
+    if (model > maxC) maxC = model;
+    return { rec: r, actual, model };
+  });
+  maxC = Math.ceil(maxC / 2) * 2;
+  const n = rows.length;
+  const slot = (W - padL - padR) / n;
+  const barW = Math.min(34, slot * 0.6);
+  const y = c => H - padB - (c / maxC) * (H - padT - padB);
+  const anim = recentAnimate ? ' animate' : '';
+  let out = `
+    <line x1="${padL}" y1="${H - padB}" x2="${W - padR}" y2="${H - padB}" style="stroke:var(--chart-grid)"/>
+    <text x="${padL - 6}" y="${padT + 4}" font-size="10" style="fill:var(--chart-text)" text-anchor="end">$${maxC}</text>
+    <text x="${padL - 6}" y="${H - padB}" font-size="10" style="fill:var(--chart-text)" text-anchor="end">$0</text>`;
+  rows.forEach((r, i) => {
+    const cx = padL + slot * i + slot / 2;
+    const bx = cx - barW / 2;
+    const sel = selectedRecentIdx === i;
+    const dim = selectedRecentIdx !== null && !sel;
+    const fill = sel ? 'var(--chart-line)' : 'var(--chart-soft)';
+    const missUsd = ELECTRIC.typicalMissUsd || 0;
+    if (missUsd > 0) {
+      const bandTop = y(Math.min(maxC, r.model + missUsd)), bandBot = y(Math.max(0, r.model - missUsd));
+      out += `<rect x="${(cx - barW / 2 - 3).toFixed(1)}" y="${bandTop.toFixed(1)}" width="${(barW + 6).toFixed(1)}" height="${Math.max(1, bandBot - bandTop).toFixed(1)}" rx="3" style="fill:var(--chart-line); opacity:${selectedRecentIdx !== null && selectedRecentIdx !== i ? 0.05 : 0.13};"/>`;
+    }
+    out += `<rect class="bar${anim}" x="${bx.toFixed(1)}" y="${y(r.actual).toFixed(1)}" width="${barW.toFixed(1)}" height="${(H - padB - y(r.actual)).toFixed(1)}" rx="3" style="fill:${fill};${dim ? 'opacity:0.4;' : ''} animation-delay:${(i * 35)}ms"/>`;
+    out += `<line x1="${(cx - barW / 2 - 3).toFixed(1)}" y1="${y(r.model).toFixed(1)}" x2="${(cx + barW / 2 + 3).toFixed(1)}" y2="${y(r.model).toFixed(1)}" style="stroke:var(--chart-strong);${dim ? 'opacity:0.4;' : ''}" stroke-width="2"/>`;
+    out += `<text x="${cx.toFixed(1)}" y="${H - padB + 14}" font-size="9" style="fill:var(--chart-text)" text-anchor="middle">${r.rec[0].slice(5).replace('-', '/')}</text>`;
+    out += `<rect class="tapzone" x="${(padL + slot * i).toFixed(1)}" y="${padT}" width="${slot.toFixed(1)}" height="${(H - padT - padB).toFixed(1)}" fill="transparent" onclick="selectRecentDay(${i})"/>`;
+  });
+  svg.innerHTML = out;
+  recentAnimate = false;
+
+  const detail = document.getElementById('recentDetail');
+  if (detail) {
+    if (selectedRecentIdx !== null && rows[selectedRecentIdx]) {
+      const r = rows[selectedRecentIdx], rec = r.rec;
+      const delta = r.actual - r.model;
+      const dc = delta <= 0 ? 'var(--good)' : 'var(--bad)';
+      detail.innerHTML = `<div class="day-detail">
+        <strong>${fmtDateNice(rec[0])}</strong> — $${r.actual.toFixed(2)} actual · ${rec[3].toFixed(1)} kWh
+        <div class="note" style="margin-top:3px;">Model expected $${r.model.toFixed(2)} for ${rec[1].toFixed(0)}°F / ${rec[2].toFixed(0)}% humidity → <span style="color:${dc}; font-weight:650;">${delta >= 0 ? '+' : '−'}$${Math.abs(delta).toFixed(2)}</span> vs. expected <span style=\"opacity:0.7;\">(typical miss ±$${(ELECTRIC.typicalMissUsd || 0).toFixed(2)})</span></div>
+      </div>`;
+    } else {
+      detail.innerHTML = '';
+    }
+  }
+}
+
+function renderMonthSoFar() {
+  const el = document.getElementById('monthSoFar');
+  if (!el || !DAILY_RECORDS.length) return;
+  const latest = DAILY_RECORDS[DAILY_RECORDS.length - 1][0];
+  const ym = latest.slice(0, 7);
+  const recs = DAILY_RECORDS.filter(r => r[0].slice(0, 7) === ym);
+  const monthIdx = parseInt(ym.slice(5), 10) - 1;
+  const monthName = ['January','February','March','April','May','June','July','August','September','October','November','December'][monthIdx];
+  const daysInMonth = new Date(parseInt(ym.slice(0, 4), 10), monthIdx + 1, 0).getDate();
+  const totalElec = recs.reduce((s, r) => s + actualElecCost(r[3]), 0);
+  const avgDay = totalElec / recs.length;
+  const m = MONTHLY_RECORDS[monthIdx];
+  const typicalElecDay = ELECTRIC.fixedPerDay + m[3] * ELECTRIC.rate;
+  const gasDay = (m[5] !== null && m[5] !== undefined) ? m[5] : gasDaily(m[1]);
+  const projected = avgDay * daysInMonth + gasDay * daysInMonth;
+  el.innerHTML = `
+    <div class="stat-grid">
+      <div class="stat-box"><div class="stat-label">Electric so far</div><div class="stat-value">$${totalElec.toFixed(0)}</div><div class="stat-sub">${recs.length} metered day${recs.length === 1 ? '' : 's'} in ${monthName}</div></div>
+      <div class="stat-box"><div class="stat-label">Avg per day</div><div class="stat-value">$${avgDay.toFixed(2)}</div><div class="stat-sub">typical ${monthName}: $${typicalElecDay.toFixed(2)}/day</div></div>
+      <div class="stat-box"><div class="stat-label">Full-month pace</div><div class="stat-value">$${projected.toFixed(0)}</div><div class="stat-sub">incl. ~$${(gasDay * daysInMonth).toFixed(0)} gas</div></div>
+    </div>
+    <div class="note" style="margin-top:8px;">"Pace" assumes the rest of ${monthName} looks like the metered days so far — weather swings will move it.</div>
+  `;
+}
+
+function renderRecentPerformance() {
+  const el = document.getElementById('testStatus');
+  if (!el) return;
+  const titleEl = document.getElementById('testCardTitle');
+  if (titleEl) titleEl.innerText = 'Recent Performance';
+  if (!DAILY_RECORDS.length) { el.innerHTML = '<div class="note">Not enough data yet.</div>'; return; }
+
+  const withDelta = DAILY_RECORDS.map(r => {
+    const [date, tempF, humidityPct, kwh] = r;
+    const actual = actualElecCost(kwh);
+    const model = electricDaily(tempF, humidityPct).cost;
+    return { date, tempF, humidityPct, actual, model, delta: actual - model };
+  });
+
+  // 1. rolling window - always live, never goes stale between settings changes
+  const windowN = Math.min(14, withDelta.length);
+  const recent = withDelta.slice(-windowN);
+  const rollingAvg = recent.reduce((s, r) => s + r.delta, 0) / recent.length;
+  const rollColor = rollingAvg <= 0 ? 'var(--good)' : 'var(--bad)';
+  const rollWord = rollingAvg <= 0 ? 'saving' : 'costing';
+  let html = `<div class="delta-line" style="color:${rollColor}; margin-top:0;">${rollingAvg <= 0 ? '▼' : '▲'} Last ${recent.length} day${recent.length === 1 ? '' : 's'}: ${rollWord} $${Math.abs(rollingAvg).toFixed(2)}/day vs. the model</div>`;
+
+  // 2. cumulative total since the last settings change
+  const log = [...SETTINGS_LOG].sort((a, b) => (a[0] < b[0] ? -1 : 1));
+  const cur = log[log.length - 1];
+  const startDate = cur[0], notes = cur[2];
+  const eraRows = withDelta.filter(r => r.date >= startDate);
+  if (eraRows.length > 0) {
+    const totalDelta = eraRows.reduce((s, r) => s + r.delta, 0);
+    const eraColor = totalDelta <= 0 ? 'var(--good)' : 'var(--bad)';
+    const eraWord = totalDelta <= 0 ? 'saved' : 'cost';
+    html += `<div class="note" style="margin-top:8px;"><strong>Since ${startDate}:</strong> ${eraWord} <strong style="color:${eraColor};">$${Math.abs(totalDelta).toFixed(2)}</strong> ${totalDelta <= 0 ? 'less' : 'more'} than the model over ${eraRows.length} day${eraRows.length === 1 ? '' : 's'}.</div><div class="note" style="margin-top:2px; color:var(--sub); font-size:0.82rem;">${notes}</div>`;
+  }
+
+  // 3. biggest surprise in the last 30 days - either direction
+  const surpriseWindow = withDelta.slice(-30);
+  if (surpriseWindow.length > 0) {
+    const biggest = surpriseWindow.reduce((a, b) => Math.abs(b.delta) > Math.abs(a.delta) ? b : a);
+    const sColor = biggest.delta <= 0 ? 'var(--good)' : 'var(--bad)';
+    const sWord = biggest.delta <= 0 ? 'under' : 'over';
+    html += `<div class="note" style="margin-top:6px;">Biggest recent surprise: <strong>${fmtDateNice(biggest.date)}</strong> — <span style="color:${sColor}; font-weight:600;">$${Math.abs(biggest.delta).toFixed(2)} ${sWord} model</span> (${biggest.tempF.toFixed(0)}°F, ${biggest.humidityPct.toFixed(0)}% humidity)</div>`;
+  }
+
+  el.innerHTML = html;
+}
+
+function renderModelNotes() {
+  const el = document.getElementById('modelNotes');
+  if (!el) return;
+  const f = (typeof MODEL_FIT !== 'undefined' && MODEL_FIT) ? MODEL_FIT : null;
+  const bal = ELECTRIC.balance;
+  let html = 'Electric: piecewise model with a balance point at ' + bal + '°F — below it cost rises with heating load, above it with cooling load plus a humidity surcharge. Marginal rate 17.06¢/kWh + ~$22.62/month fixed charge.';
+  if (f) {
+    html += '<br><br><strong>Refit nightly on all ' + f.fitDays + ' metered days.</strong> Typical daily miss: $' + f.medianMissUsd.toFixed(2) + ' (average $' + f.maeUsd.toFixed(2) + ', 3 in 4 days within $' + f.p75MissUsd.toFixed(2) + '). Day-to-day scatter beyond that is mostly behavior — laundry, cooking, guests — not weather, so a single day off the mark means little; a week trending off the mark means something.';
+  }
+  html += '<br><br>Gas: ~23 monthly bills, flat ~$2.21/day floor above 55°F, rising ~19.6¢/degree colder below. The confidence badges come from real per-5°F-bin day counts, not a guess.';
+  el.innerHTML = html;
+}
+
+function renderToday() {
+  renderModelNotes();
+  renderAlertStrip();
+  renderTodayHero();
+  renderRecentChart();
+  renderMonthSoFar();
+  renderRecentPerformance();
+  renderMonthlyAccuracy();
+  const eb = document.getElementById('eyebrowDate');
+  if (eb) eb.innerText = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }).toUpperCase();
+  const fl = document.getElementById('footerLine');
+  if (fl) fl.innerText = 'Personal reference tool — not a substitute for real-time monitoring during an actual outage. Electric data through ' + LAST_DATA_DATES.aep + '.';
+}
+
+// ---------- iOS SLIDER FILL ----------
+function refreshSliderFills() {
+  if (typeof document.querySelectorAll !== 'function') return;
+  document.querySelectorAll('input[type=range]').forEach(el => {
+    const min = parseFloat(el.min || 0), max = parseFloat(el.max || 100), v = parseFloat(el.value);
+    const p = max > min ? ((v - min) / (max - min)) * 100 : 0;
+    el.style.background = 'linear-gradient(90deg, var(--tint) ' + p.toFixed(1) + '%, var(--track) ' + p.toFixed(1) + '%)';
+  });
+}
+if (typeof window !== 'undefined') {
+  ['updateSim', 'updateOutage', 'updateApplianceCost'].forEach(n => {
+    const f = window[n];
+    if (typeof f === 'function') window[n] = function () { const r = f.apply(this, arguments); refreshSliderFills(); return r; };
+  });
+}
+
+// ---------- LIVE CURRENT WEATHER ----------
+// Mingo Junction, OH 43938 (via Open-Meteo geocoding). Free, keyless, CORS-friendly API -
+// same one used to build the historical weather_log.csv for this project.
+const HOME_COORDS = { lat: 40.32174, lon: -80.6098 };
+
+// Populated from the daily forecast block of the same weather fetch used for the
+// live "Outside" reading — keyed by YYYY-MM-DD, e.g. FORECAST_BY_DATE["2026-07-05"] = {high, low}.
+let FORECAST_BY_DATE = {};
+
+function loadCurrentWeather() {
+  const note = document.getElementById('liveWeatherNote');
+  const outsideTile = document.getElementById('outsideTile');
+  const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + HOME_COORDS.lat +
+              '&longitude=' + HOME_COORDS.lon +
+              '&current=temperature_2m,relative_humidity_2m' +
+              '&daily=temperature_2m_max,temperature_2m_min&forecast_days=16' +
+              '&temperature_unit=fahrenheit&timezone=auto';
+
+  const weatherController = new AbortController();
+  const weatherTimeout = setTimeout(() => weatherController.abort(), 8000);
+
+  fetch(url, { signal: weatherController.signal }).then(r => { clearTimeout(weatherTimeout); return r.json(); }).then(data => {
+    const cur = data && data.current;
+    if (!cur || typeof cur.temperature_2m !== 'number') throw new Error('bad response');
+    const rawT = Math.round(cur.temperature_2m), rawH = Math.round(cur.relative_humidity_2m);
+    const tempEl = document.getElementById('tempSlider');
+    const humEl = document.getElementById('humiditySlider');
+    const t = Math.max(parseFloat(tempEl.min), Math.min(parseFloat(tempEl.max), rawT));
+    const h = Math.max(parseFloat(humEl.min), Math.min(parseFloat(humEl.max), rawH));
+    tempEl.value = t;
+    humEl.value = h;
+    updateSim();
+    const timeStr = new Date().toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+    if (note) note.innerText = '🌤️ Showing today\'s actual conditions: ' + rawT + '°F, ' + rawH + '% humidity (as of ' + timeStr + ') — move the sliders to explore other scenarios.';
+    if (outsideTile) {
+      const dotColor = rawT >= 76 ? 'var(--bad)' : (rawT >= 72 ? 'var(--warn)' : 'var(--accent)');
+      outsideTile.innerHTML = `
+        <div class="room-name"><span class="room-dot" style="background:${dotColor};"></span>Outside</div>
+        <div class="room-temp">${rawT}°F</div>
+        <div class="room-hum">${rawH}% humidity · live, ${timeStr}</div>`;
+    }
+
+    FORECAST_BY_DATE = {};
+    const daily = data && data.daily;
+    if (daily && Array.isArray(daily.time)) {
+      daily.time.forEach((dateStr, i) => {
+        const hi = daily.temperature_2m_max[i], lo = daily.temperature_2m_min[i];
+        if (typeof hi === 'number' && typeof lo === 'number') {
+          FORECAST_BY_DATE[dateStr] = { high: hi, low: lo };
+        }
+      });
+    }
+    renderTodaysPriceEstimate(rawH);
+    renderMonthlyBillEstimate();
+  }).catch(() => {
+    clearTimeout(weatherTimeout);
+    if (note) note.innerText = 'Couldn\'t reach live weather right now — showing the default 45°F / 72% scenario instead. Move the sliders to explore other conditions.';
+    if (outsideTile) {
+      outsideTile.innerHTML = `
+        <div class="room-name"><span class="room-dot" style="background:var(--neutral);"></span>Outside</div>
+        <div class="room-temp">--°F</div>
+        <div class="room-hum">Live weather unavailable</div>`;
+    }
+    const todayEl = document.getElementById('todayEstimate'), todaySub = document.getElementById('todayEstimateSub');
+    if (todayEl) todayEl.innerText = '—';
+    if (todaySub) todaySub.innerText = 'Forecast unavailable';
+    renderMonthlyBillEstimate();
+  });
+}
+
+// Today's Price Estimate: average of today's forecast high/low fed into the same
+// cost model used everywhere else — not a new model, just a new input to it.
+function renderTodaysPriceEstimate(todayHumidity) {
+  const el = document.getElementById('todayEstimate');
+  const sub = document.getElementById('todayEstimateSub');
+  if (!el) return;
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const fc = FORECAST_BY_DATE[todayStr];
+  if (!fc) {
+    el.innerText = '—';
+    if (sub) sub.innerText = 'Forecast unavailable';
+    return;
+  }
+  const avgT = (fc.high + fc.low) / 2;
+  const h = (typeof todayHumidity === 'number') ? todayHumidity : ELECTRIC.humidityBaseline;
+  const cost = electricDaily(avgT, h).cost + gasDaily(avgT);
+  el.innerText = '$' + cost.toFixed(2);
+  if (sub) sub.innerText = 'Forecast ' + Math.round(fc.high) + '°F / ' + Math.round(fc.low) + '°F';
+}
+
+// Monthly Bill Estimate: real AEP dollars for days already metered this month,
+// plus modeled cost for the rest of the month — forecast-based where the 16-day
+// forecast reaches, this month's historical average temp beyond that.
+function renderMonthlyBillEstimate() {
+  const el = document.getElementById('monthEstimate');
+  const sub = document.getElementById('monthEstimateSub');
+  if (!el || !DAILY_RECORDS.length) return;
+  const latest = DAILY_RECORDS[DAILY_RECORDS.length - 1][0];
+  const ym = latest.slice(0, 7);
+  const recs = DAILY_RECORDS.filter(r => r[0].slice(0, 7) === ym);
+  const monthIdx = parseInt(ym.slice(5), 10) - 1;
+  const year = parseInt(ym.slice(0, 4), 10);
+  const daysInMonth = new Date(year, monthIdx + 1, 0).getDate();
+  const m = MONTHLY_RECORDS[monthIdx];
+  const monthlyAvgGas = (m[5] !== null && m[5] !== undefined) ? m[5] : null;
+
+  const metered = new Set(recs.map(r => r[0]));
+  let total = 0;
+  recs.forEach(r => {
+    total += actualElecCost(r[3]) + (monthlyAvgGas !== null ? monthlyAvgGas : gasDaily(r[1]));
+  });
+
+  let forecastDays = 0, historicalDays = 0;
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateStr = ym + '-' + String(day).padStart(2, '0');
+    if (metered.has(dateStr)) continue;
+    const fc = FORECAST_BY_DATE[dateStr];
+    let tempEstimate;
+    if (fc) { tempEstimate = (fc.high + fc.low) / 2; forecastDays++; }
+    else { tempEstimate = m[1]; historicalDays++; }
+    const elec = electricDaily(tempEstimate, m[2]).cost;
+    const gas = monthlyAvgGas !== null ? monthlyAvgGas : gasDaily(tempEstimate);
+    total += elec + gas;
+  }
+  el.innerText = '$' + total.toFixed(0);
+  if (sub) sub.innerText = recs.length + ' actual + ' + forecastDays + ' forecast + ' + historicalDays + ' avg-based day' + (historicalDays === 1 ? '' : 's');
+}
+
+// ---------- INIT ----------
+buildBatteryList();
+buildApplianceList();
+buildEgoDirectList();
+buildApplianceSelect();
+const solarStationSel = document.getElementById('station-solar');
+if (solarStationSel) solarStationSel.innerHTML = stationOptionsHtml(SOLAR.station);
+const newBatteryStationSel = document.getElementById('newBatteryStation');
+if (newBatteryStationSel) newBatteryStationSel.innerHTML = stationOptionsHtml(STATIONS[0].id);
+const newApplianceStationSel = document.getElementById('newApplianceStation');
+if (newApplianceStationSel) newApplianceStationSel.innerHTML = stationOptionsHtml(STATIONS[0].id);
+updateSim();
+updateOutage();
+drawRealityChart();
+renderSettingsTracker();
+renderDataStaleness();
+renderSeasonalCalendar();
+renderRoomSnapshot();
+renderToday();
+if (typeof window !== 'undefined') {
+  refreshSliderFills();
+  const rsvg = document.getElementById('recentChart');
+  if (rsvg && rsvg.addEventListener) {
+    let tx = null;
+    rsvg.addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, { passive: true });
+    rsvg.addEventListener('touchend', e => {
+      if (tx === null) return;
+      const dx = e.changedTouches[0].clientX - tx; tx = null;
+      if (dx > 44) shiftRecent(1); else if (dx < -44) shiftRecent(-1);
+    }, { passive: true });
+  }
+  window.addEventListener('scroll', () => {
+    const nc = document.getElementById('navCompact');
+    if (nc) nc.classList.toggle('visible', window.scrollY > 64);
+  }, { passive: true });
+}
+loadCurrentWeather();
+</script>
+</body>
+</html>

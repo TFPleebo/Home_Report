@@ -1,0 +1,30 @@
+Appliance,Category,Typical_Watts,Flexibility,Battery_Backup_Feasible,Notes
+Central air conditioning,HVAC,Unconfirmed (whole-house),Fixed - main comfort driver,No,"Too large for portable battery setup. Main driver of summer electric cost; setpoint is the main lever (currently 72F)."
+Upstairs window AC,HVAC,Unconfirmed - flagged as TBD,Flexible (schedule already adjusted once),Not confirmed safe/tested,"Currently flat 73F test as of 7/3/2026 (was 75F 1am-1pm / 72F 1pm-1am before). Exact wattage still unknown - worth measuring."
+Natural gas furnace,HVAC,Blower only (gas heat itself not electric),Fixed in winter,No (blower needs power),"Gas is the dominant winter heating cost, not electric. Blower motor may explain the small electric heating-side cost we found below 45F."
+Gas log fireplace,HVAC,Non-electric heat,Backup/optional,Yes (non-electric),Primary winter backup heat source if power/furnace is out.
+Main kitchen refrigerator,Refrigeration,~100W avg (cycling),Fixed - always on,Yes - Delta Pro priority 1,Highest priority load in an outage. Real-world test showed ~80-90W cycling.
+Deep freezer,Refrigeration,Unconfirmed - TBD,Fixed but can rotate,Yes - Delta Pro rotation,Check around 48hr mark in an outage; rotate with fridge if needed.
+Mini fridge,Refrigeration,~52-70W avg,Optional/discretionary,Yes but lower priority,"Roughly 1.25-1.7 kWh/day. Considered for solar-offset earlier; not pursued (modest savings, conflicts with keeping Delta Pro outage-ready)."
+Air fryer,Kitchen/cooking,1750W,Flexible - short burst,Acceptable on Delta Pro briefly,Do not run with other large kitchen loads at once.
+Microwave,Kitchen/cooking,1000W,Flexible - short burst,Good on any unit briefly,Efficient for quick heating.
+Keurig,Kitchen/cooking,1500W,Flexible - short burst,Good on any unit briefly,High wattage but very short runtime.
+Crockpot (low),Kitchen/cooking,200W,Flexible - long duration,Only if battery levels strong,Long-duration draw, use selectively.
+Gas stove,Kitchen/cooking,Non-electric,Backup cooking option,Yes (non-electric),Alternative to battery-powered cooking appliances.
+Outdoor grill/griddle,Kitchen/cooking,Non-electric,Backup cooking option,Yes (non-electric),Preferred when battery levels matter.
+65-inch TV + Apple TV,Entertainment,~120W,Flexible - nice to have,Yes - lower priority,Fine once essentials are covered.
+Game console,Entertainment,~70W,Flexible - nice to have,Only if batteries strong,Not a priority load.
+HomePod,Entertainment,~10W,Flexible - low draw,Yes - low priority,Negligible battery impact.
+Beats Pill speaker,Entertainment,~15W,Flexible - low draw,Yes - low priority,Negligible battery impact.
+WiFi router,Communications,~12W,Semi-fixed - high value for low draw,Yes - priority,Worth powering; note ISP infrastructure may still fail regardless.
+Small bedside fan(s),Comfort,~35W,Flexible/reducible,Yes - good fit,Reasonable to run regularly; low draw relative to comfort gained.
+Large/small EGO fans,Comfort,Varies (battery-powered),Flexible/reducible,Yes - primary comfort tool,"Best low-effort lever for ""raise thermostat + use fan"" comfort strategy."
+Electric blanket,Comfort,~120W,Flexible - limit use,Possible but limit,Reasonable in moderation.
+Portable electric heater,Comfort,1200W,AVOID as regular strategy,Avoid - battery killer,"~33%/hr of Delta Pro, more than a full Delta 3 charge per hour. Worst possible load."
+Bestway pool pump,Outdoor,~120W,Optional/non-emergency,Optional,Can be paused without consequence.
+Garage door opener,Outdoor/access,Large intermittent,Avoid opening in winter outages,Situational,Heat loss and access risk concern in winter.
+Crawlspace heat lamps,Infrastructure protection,Unconfirmed,Situational - cold snaps only,Situational,Use strategically in extreme cold to protect pipes; do not run unnecessarily.
+Gutter heat cables,Infrastructure protection,Unconfirmed,Smart-switch controlled,Situational,Selective use for ice management.
+Outdoor security cameras,Security,Low draw (USB-powered),Fixed - keep running,Yes - dedicated USB banks,Best kept on dedicated USB power banks, not main stations.
+iPhone/iPad/MacBook/Switch charging,Electronics,10-60W each,Flexible,Yes - low priority but easy,Charge in groups then unplug to reduce inverter overhead.
+Water heater,Water heating,Unconfirmed - TBD,Fixed,Unknown,Fuel type/wattage not yet confirmed - worth adding once known.

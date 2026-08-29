@@ -1,0 +1,11 @@
+Device,Capacity_Wh,Primary_Role,Daily_Grid_Offset_Candidate,Notes
+EcoFlow Delta Pro,3600,Emergency refrigeration/freezer anchor,No - avoid,"Big enough capacity to matter, but the household plan reserves it for outage refrigeration. Daily cycling for cost-saving works against having it ready/topped-off when actually needed."
+EcoFlow Delta 3,1024,Secondary/living-space backup,Maybe,"Moderate capacity, more replaceable role than the Delta Pro. Reasonable candidate for small discretionary daily loads if recharged via solar, not wall power."
+EcoFlow River 2,256,Small personal/room battery,Yes,"Best low-conflict candidate for daily use - small enough that losing availability for an outage isn't a big deal. Good fit for a dedicated fan or phone charging off solar."
+Anker 548 Power Bank,192,First-grab emergency light/power,No - avoid,"Meant to be instantly available and topped off for safety use. Not worth risking its charge state for small daily savings."
+EGO 2.5Ah battery,140,Reserve low-draw power (tool platform),Yes,"Only powers EGO tools/fans without an inverter adapter. Using it for fans daily doesn't conflict with emergency use since it's easy to recharge and not a single dedicated reserve unit."
+EGO 5.0Ah battery,280,Reserve low-draw power (tool platform),Yes,Same as above - good fit for fan duty.
+EGO 7.5Ah battery,420,Reserve low-draw power (tool platform),Yes,Same as above - good fit for fan duty; longest runtime of the EGO batteries.
+USB power banks (misc),Varies,Camera/phone backup,No - avoid,Dedicated to security cameras per the household plan; not worth repurposing.
+
+SUMMARY,,,,"Real-world day-to-day savings potential is modest across the board (probably a few kWh/day at most, only if solar charging is used consistently rather than wall charging). The best candidates for daily/non-emergency use without conflicting with the outage plan are the River 2 and the EGO batteries (fan duty). The Delta Pro and Anker 548 are better left alone for their reserved emergency roles."
