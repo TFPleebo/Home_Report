@@ -124,10 +124,32 @@ def read_gas():
     return by_month, last_read
 
 
+def dashboard_rate():
+    """Read $/kWh straight out of the dashboard's ELECTRIC block.
+
+    Single source of truth: the model's error-to-dollars conversion MUST use the
+    same rate the dashboard charges actual usage at, or the "typical miss" band
+    is wrong and the Metered Days list over/under-flags days. (This bit me once:
+    the rate was updated to 0.1892 from a real bill while this stayed 0.1706,
+    silently shrinking the band ~10%.)"""
+    fallback = 0.1892
+    try:
+        html = DASHBOARD.read_text(encoding="utf-8")
+        block = re.search(r"const ELECTRIC = \{(.*?)\}", html, re.S)
+        if block:
+            m = re.search(r"\brate:\s*([0-9.]+)", block.group(1))
+            if m:
+                return float(m.group(1))
+    except OSError:
+        pass
+    print(f"  ! could not read rate from dashboard; falling back to {fallback}")
+    return fallback
+
+
 def refit_model(daily):
     """Piecewise-linear refit: kwh ~ base + heat*(bal-T)+ + cool*(T-bal)+ + hum*coolside*(H-72).
     Grid-searches the balance point; pure python normal equations (no numpy)."""
-    RATE = 0.1706
+    RATE = dashboard_rate()
 
     def solve(A, b):
         n = len(A)
