@@ -1275,6 +1275,13 @@ function renderSettingsTracker() {
   container.innerHTML = rows;
 }
 
+// ---------- MONTHLY BILL ESTIMATE - TRACK RECORD ----------
+// Each bar is a month's real average $/day; the tick is what the same model would
+// have predicted from that month's real weather. Electric only: gas is billed
+// monthly, not metered daily, so there's no day-level gas actual to hold the model
+// to. Same bar+tick+tap visual language as the "Metered Days" chart, at month grain.
+let selectedMonthlyIdx = null, monthlyAccuracyAnimate = true;
+
 function selectMonthlyAccuracy(i) {
   selectedMonthlyIdx = (selectedMonthlyIdx === i) ? null : i;
   monthlyAccuracyAnimate = false;
