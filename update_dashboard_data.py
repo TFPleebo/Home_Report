@@ -97,10 +97,23 @@ def read_climate():
 
 
 def read_settings():
+    """[date, setpointF, notes, eventType].
+
+    eventType is one of:
+      setting   - the thermostat/AC configuration actually changed
+      occupancy - who was home changed; settings untouched
+      event     - one-off incident or condition; settings untouched
+
+    Only 'setting' rows start a new comparison period in the tracker. Without
+    this, every logged incident fragmented the history into 1-3 day slivers that
+    were too short to draw any conclusion from. Falls back to 'setting' if the
+    column is absent, so an older changelog still works.
+    """
     log = []
     with open(SETTINGS, newline="") as f:
         for row in csv.DictReader(f):
-            log.append([row["Date"], row["MainThermostat_Set_F"], row["Notes"]])
+            log.append([row["Date"], row["MainThermostat_Set_F"], row["Notes"],
+                        (row.get("Event_Type") or "setting").strip().lower()])
     log.sort(key=lambda r: r[0])
     return log
 
@@ -247,8 +260,11 @@ def build_block(daily, sensors, settings, gas_by_month, last_aep, last_sensor_dt
 
     # The most recent settings change that isn't the seasonal baseline —
     # used by the Model vs. Reality chart to color "new settings" days.
-    change_date = settings[-1][0] if settings else "2026-06-28"
-    for row in settings:
+    # Only real setting changes count here - an incident or an occupancy note
+    # shouldn't recolor the chart as though the setup changed.
+    real = [r for r in settings if r[3] == "setting"]
+    change_date = real[-1][0] if real else "2026-06-28"
+    for row in real:
         if row[0] >= "2026-06-28":
             change_date = row[0]
             break
@@ -275,7 +291,7 @@ def build_block(daily, sensors, settings, gas_by_month, last_aep, last_sensor_dt
         "// First experiment date — days on/after this are colored as 'new settings' in charts.",
         f"const SETTINGS_CHANGE_DATE = {js(change_date)};",
         "",
-        "// Mirrors data/settings_changelog.csv row for row: [date, thermostatSetF, notes].",
+        "// Mirrors data/settings_changelog.csv row for row: [date, thermostatSetF, notes, eventType].",
         f"const SETTINGS_LOG = {js(settings)};",
         "",
         "// Last real date seen in each source file at refresh time.",
