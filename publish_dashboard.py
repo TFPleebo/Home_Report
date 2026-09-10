@@ -74,7 +74,7 @@ def main():
                 ignore=shutil.ignore_patterns(".DS_Store", "*.bak"),
             )
         for name in ("merge.py", "update_dashboard_data.py", "fetch_weather.py",
-                     "publish_dashboard.py", "sync_from_repo.py",
+                     "publish_dashboard.py", "sync_from_repo.py", "smoke_test.js",
                      "house_power_dashboard.html", ".gitignore"):
             f = ROOT / name
             if f.exists():
