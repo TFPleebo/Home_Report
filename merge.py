@@ -243,9 +243,24 @@ def load_combined_inbox(filename="home_sensors_inbox.csv"):
         return
     with open(inbox_path) as f:
         reader = csv.DictReader(f)
+        # The Shortcut writes a fixed column order, but the header line has twice
+        # been reverted by an iCloud sync and lost its trailing Fridge_Temp_F
+        # column. When that happens DictReader dumps the surplus value into the
+        # None key and every fridge reading is silently discarded - it took weeks
+        # to notice both times. Recover those values positionally instead of
+        # trusting the header.
+        expected_tail = ["Fridge_Temp_F"]
+        missing_tail = [c for c in expected_tail if c not in (reader.fieldnames or [])]
+        if missing_tail:
+            print(f"  ! home_sensors_inbox.csv header is missing {missing_tail} - "
+                  f"recovering those columns positionally")
         for r in reader:
             if not r.get("Date"):
                 continue
+            surplus = r.get(None) or []
+            for col, val in zip(missing_tail, surplus):
+                if val is not None and str(val).strip():
+                    r[col] = val
             date = r["Date"].strip()
             if not date:
                 continue

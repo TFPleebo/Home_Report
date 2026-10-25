@@ -1,4 +1,4 @@
-Date,Time,Main_Temp_F,Main_Humidity_pct,Basement_Temp_F,Basement_Humidity_pct,BedroomAqara_Temp_F,BedroomAqara_Humidity_pct,BedroomHomePod_Temp_F,BedroomHomePod_Humidity_pct,Crawlspace_Temp_F,Crawlspace_Humidity_pct
+Date,Time,Main_Temp_F,Main_Humidity_pct,Basement_Temp_F,Basement_Humidity_pct,BedroomAqara_Temp_F,BedroomAqara_Humidity_pct,BedroomHomePod_Temp_F,BedroomHomePod_Humidity_pct,Crawlspace_Temp_F,Crawlspace_Humidity_pct,Fridge_Temp_F
 2026-07-03,11:30,68.36,58,78.62,51,75.92,54,70.16,59,75.74,68
 2026-07-02,20:43,69.8,58,,,,,,,,
 2026-07-02,21:38,69.08,58,,,,,,,,
