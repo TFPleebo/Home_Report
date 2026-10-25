@@ -1,30 +1,16 @@
 Appliance,Category,Typical_Watts,Flexibility,Battery_Backup_Feasible,Notes
-Central air conditioning,HVAC,Unconfirmed (whole-house),Fixed - main comfort driver,No,"Too large for portable battery setup. Main driver of summer electric cost; setpoint is the main lever (currently 72F)."
-Upstairs window AC,HVAC,Unconfirmed - flagged as TBD,Flexible (schedule already adjusted once),Not confirmed safe/tested,"Currently flat 73F test as of 7/3/2026 (was 75F 1am-1pm / 72F 1pm-1am before). Exact wattage still unknown - worth measuring."
-Natural gas furnace,HVAC,Blower only (gas heat itself not electric),Fixed in winter,No (blower needs power),"Gas is the dominant winter heating cost, not electric. Blower motor may explain the small electric heating-side cost we found below 45F."
-Gas log fireplace,HVAC,Non-electric heat,Backup/optional,Yes (non-electric),Primary winter backup heat source if power/furnace is out.
-Main kitchen refrigerator,Refrigeration,~100W avg (cycling),Fixed - always on,Yes - Delta Pro priority 1,Highest priority load in an outage. Real-world test showed ~80-90W cycling.
-Deep freezer,Refrigeration,Unconfirmed - TBD,Fixed but can rotate,Yes - Delta Pro rotation,Check around 48hr mark in an outage; rotate with fridge if needed.
-Mini fridge,Refrigeration,~52-70W avg,Optional/discretionary,Yes but lower priority,"Roughly 1.25-1.7 kWh/day. Considered for solar-offset earlier; not pursued (modest savings, conflicts with keeping Delta Pro outage-ready)."
-Air fryer,Kitchen/cooking,1750W,Flexible - short burst,Acceptable on Delta Pro briefly,Do not run with other large kitchen loads at once.
-Microwave,Kitchen/cooking,1000W,Flexible - short burst,Good on any unit briefly,Efficient for quick heating.
-Keurig,Kitchen/cooking,1500W,Flexible - short burst,Good on any unit briefly,High wattage but very short runtime.
-Crockpot (low),Kitchen/cooking,200W,Flexible - long duration,Only if battery levels strong,Long-duration draw, use selectively.
-Gas stove,Kitchen/cooking,Non-electric,Backup cooking option,Yes (non-electric),Alternative to battery-powered cooking appliances.
-Outdoor grill/griddle,Kitchen/cooking,Non-electric,Backup cooking option,Yes (non-electric),Preferred when battery levels matter.
-65-inch TV + Apple TV,Entertainment,~120W,Flexible - nice to have,Yes - lower priority,Fine once essentials are covered.
-Game console,Entertainment,~70W,Flexible - nice to have,Only if batteries strong,Not a priority load.
-HomePod,Entertainment,~10W,Flexible - low draw,Yes - low priority,Negligible battery impact.
-Beats Pill speaker,Entertainment,~15W,Flexible - low draw,Yes - low priority,Negligible battery impact.
-WiFi router,Communications,~12W,Semi-fixed - high value for low draw,Yes - priority,Worth powering; note ISP infrastructure may still fail regardless.
-Small bedside fan(s),Comfort,~35W,Flexible/reducible,Yes - good fit,Reasonable to run regularly; low draw relative to comfort gained.
-Large/small EGO fans,Comfort,Varies (battery-powered),Flexible/reducible,Yes - primary comfort tool,"Best low-effort lever for ""raise thermostat + use fan"" comfort strategy."
-Electric blanket,Comfort,~120W,Flexible - limit use,Possible but limit,Reasonable in moderation.
-Portable electric heater,Comfort,1200W,AVOID as regular strategy,Avoid - battery killer,"~33%/hr of Delta Pro, more than a full Delta 3 charge per hour. Worst possible load."
-Bestway pool pump,Outdoor,~120W,Optional/non-emergency,Optional,Can be paused without consequence.
-Garage door opener,Outdoor/access,Large intermittent,Avoid opening in winter outages,Situational,Heat loss and access risk concern in winter.
-Crawlspace heat lamps,Infrastructure protection,Unconfirmed,Situational - cold snaps only,Situational,Use strategically in extreme cold to protect pipes; do not run unnecessarily.
-Gutter heat cables,Infrastructure protection,Unconfirmed,Smart-switch controlled,Situational,Selective use for ice management.
-Outdoor security cameras,Security,Low draw (USB-powered),Fixed - keep running,Yes - dedicated USB banks,Best kept on dedicated USB power banks, not main stations.
-iPhone/iPad/MacBook/Switch charging,Electronics,10-60W each,Flexible,Yes - low priority but easy,Charge in groups then unplug to reduce inverter overhead.
-Water heater,Water heating,Unconfirmed - TBD,Fixed,Unknown,Fuel type/wattage not yet confirmed - worth adding once known.
+Main refrigerator (kitchen),Always-on,139,None,Yes,"MEASURED, not estimated - from the real 9/19/2026 outage (Delta 3, 100%->29% over ~4.25h). Includes defrost and outage-era door opening."
+Dorm fridge (basement/garage),Always-on,75,Low,Yes,"Estimated. Basement doubles as the garage (house built into a hill, basement has its own exit), so it is unconditioned - runs harder in summer heat, easier in winter."
+Deep freeze (basement/garage),Always-on,60,Low,Yes,Estimated. Same unconditioned basement/garage space as the dorm fridge.
+Modem / network gear,Always-on,15,None,Yes,"User reports the modem is essentially the only networking item left on 24/7. No NAS, server or DVR."
+Standby / phantom load (whole house),Always-on,245,Low,No,"RESIDUAL, inferred not measured. Overnight floor with nothing cycling is ~320W; modem accounts for ~15W, leaving ~245W across TV/AV standby, HomeKit hubs and smart plugs, LED drivers, microwave and range clocks, washer/dryer standby, garage opener, chargers. Largest single unexplained item in the house - worth a plug-in meter hunt."
+Electric clothes dryer,Intermittent,3500,High,No,"Seen clearly in interval data as 1.5-2h blocks at 3-5kW. User reports 4-5 loads/week, no fixed day. Roughly $0.80/load."
+Electric oven / range,Intermittent,4000,High,No,User confirmed electric. Shows as 4-6.5kW bursts at mealtimes - e.g. 6.48kW peak at 17:15 on 10/14.
+Dishwasher,Intermittent,1200,High,No,User describes a mix of heated and air dry.
+Pool pump,Seasonal,120,High,No,"Open ~April (late March to May depending on weather) through late August, closing when school starts. Runs ~1am to recirculate after the user tests and chlorinates before leaving for work. Visible in summer data as a Fri/Sat 1am bump that disappears once closed."
+Basement dehumidifier,Seasonal,0,Medium,No,Summer only; model and wattage unknown. Suspected cause of the basement warming 75->80F on 9/2-9/3 during the most humid stretch. Not running in the October data.
+Window AC - bedroom 1 (oldest daughter),Seasonal,172,Medium,Yes,"MEASURED by a full 24h Delta 3 test 7/3-7/4/2026: 4,132Wh = 172W average."
+Window AC - bedroom 2,Seasonal,172,Medium,Yes,"Second upstairs unit; assumed same as bedroom 1, not separately measured."
+Oil-filled radiator (daughter's bedroom),Seasonal,320,High,No,Detected in interval data from 10/19/2026. ~640W element at ~50% duty = ~320W continuous-equivalent. +2.08 kWh/night = $0.39/night.
+Gas log fireplace,Gas only,0,High,n/a,"NO electric draw - standing pilot, controls run on AA batteries, no blower. Pilot lit 10/11/2026; costs gas not electricity (~$3.61-7.22/month)."
+Furnace blower,Seasonal,0,None,No,Wattage unknown - essentially unused in autumn 2026 (user ran it ~2 min to test). Measure when it starts: look for a sustained overnight lift that tracks outdoor temperature.
