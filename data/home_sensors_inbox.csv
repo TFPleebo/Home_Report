@@ -1,4 +1,4 @@
-Date,Time,Main_Temp_F,Main_Humidity_pct,Basement_Temp_F,Basement_Humidity_pct,BedroomAqara_Temp_F,BedroomAqara_Humidity_pct,BedroomHomePod_Temp_F,BedroomHomePod_Humidity_pct,Crawlspace_Temp_F,Crawlspace_Humidity_pct,Fridge_Temp_F
+Date,Time,Main_Temp_F,Main_Humidity_pct,Basement_Temp_F,Basement_Humidity_pct,BedroomAqara_Temp_F,BedroomAqara_Humidity_pct,BedroomHomePod_Temp_F,BedroomHomePod_Humidity_pct,Crawlspace_Temp_F,Crawlspace_Humidity_pct
 2026-07-03,11:30,68.36,58,78.62,51,75.92,54,70.16,59,75.74,68
 2026-07-02,20:43,69.8,58,,,,,,,,
 2026-07-02,21:38,69.08,58,,,,,,,,
@@ -1082,3 +1082,10 @@ Date,Time,Main_Temp_F,Main_Humidity_pct,Basement_Temp_F,Basement_Humidity_pct,Be
 2026-11-07,13:30,65.3°F,53,63.68°F,54,66.74°F,59,66.92°F,56,56.48°F,60,42.26°F
 2026-11-07,17:00,66.56°F,53,63.68°F,54,66.74°F,57,66.92°F,55,56.3°F,59,40.28°F
 2026-11-07,18:02,66.2°F,51,63.86°F,54,66.38°F,56,66.92°F,55,55.94°F,60,39.38°F
+2026-11-07,19:00,65.84°F,51,63.5°F,54,66.02°F,56,66.92°F,54,56.12°F,60,38.66°F
+2026-11-07,21:00,65.66°F,51,63.32°F,54,65.84°F,55,65.3°F,53,56.12°F,61,38.66°F
+2026-11-07,23:01,64.76°F,51,63.86°F,53,65.48°F,57,65.3°F,55,55.76°F,60,39.2°F
+2026-11-08,00:58,64.4°F,51,63.86°F,53,65.66°F,59,63.86°F,57,55.94°F,61,39.2°F
+2026-11-08,06:00,62.78°F,51,62.96°F,53,65.66°F,57,64.76°F,53,54.32°F,60,39.2°F
+2026-11-08,06:03,62.78°F,51,62.96°F,53,65.66°F,57,64.76°F,53,54.32°F,60,39.2°F
+2026-11-08,06:15,62.6°F,51,62.96°F,53,65.66°F,57,64.76°F,53,54.32°F,60,39.2°F
