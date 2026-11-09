@@ -58,6 +58,12 @@ def ensure(date, time24):
             "BedroomHomePod_Temp_F": "", "BedroomHomePod_Humidity_pct": "",
             # Fridge temp probe added 7/5/2026 - single value, no humidity pair
             "Fridge_Temp_F": "",
+            # Device on/off state columns. The Shortcut reports HomeKit Power
+            # State as numeric 0/1 (confirmed 2026-11-09). These are OPTIONAL -
+            # they stay blank until the Shortcut starts writing them, and every
+            # historical row simply has empty values here.
+            "HeatLamp_On": "", "FrontCable_On": "",
+            "RearCable_On": "", "CrawlFan_On": "",
         }
     return rows[key]
 
@@ -249,15 +255,24 @@ def load_combined_inbox(filename="home_sensors_inbox.csv"):
         # None key and every fridge reading is silently discarded - it took weeks
         # to notice both times. Recover those values positionally instead of
         # trusting the header.
-        expected_tail = ["Fridge_Temp_F"]
+        # Order MUST match the order the Shortcut appends them in the CSV row.
+        # These are all TRAILING columns, which is why positional recovery works.
+        expected_tail = ["Fridge_Temp_F", "HeatLamp_On", "FrontCable_On",
+                         "RearCable_On", "CrawlFan_On"]
         missing_tail = [c for c in expected_tail if c not in (reader.fieldnames or [])]
-        if missing_tail:
-            print(f"  ! home_sensors_inbox.csv header is missing {missing_tail} - "
-                  f"recovering those columns positionally")
+        # Only WARN once we actually find surplus values to recover. Columns the
+        # Shortcut has not started writing yet are absent from both the header and
+        # the rows, which is normal and must not raise an alarm every run.
+        warned = False
         for r in reader:
             if not r.get("Date"):
                 continue
             surplus = r.get(None) or []
+            if surplus and missing_tail and not warned:
+                recovering = missing_tail[:len(surplus)]
+                print(f"  ! home_sensors_inbox.csv header is missing {recovering} - "
+                      f"recovering those columns positionally")
+                warned = True
             for col, val in zip(missing_tail, surplus):
                 if val is not None and str(val).strip():
                     r[col] = val
@@ -284,6 +299,15 @@ def load_combined_inbox(filename="home_sensors_inbox.csv"):
             # Fridge temp probe - single value column, no humidity pair, added 7/5/2026
             if "Fridge_Temp_F" in r:
                 d["Fridge_Temp_F"] = clean_numeric(r.get("Fridge_Temp_F", ""))
+            # Device on/off states - kept as bare 0/1 strings, not run through
+            # clean_numeric, so that an empty value stays empty and is never
+            # confused with a genuine "off".
+            for state_col in ("HeatLamp_On", "FrontCable_On",
+                              "RearCable_On", "CrawlFan_On"):
+                if state_col in r:
+                    v = (r.get(state_col) or "").strip()
+                    if v:
+                        d[state_col] = v
 
 load_combined_inbox()
 
@@ -334,7 +358,8 @@ fieldnames = ["Date", "Time", "MainThermostat_Set_F",
               "CrawlSpace_Temp_F", "CrawlSpace_Humidity_pct",
               "BasementSteps_Temp_F", "BasementSteps_Humidity_pct",
               "MainFloor_Temp_F", "MainFloor_Humidity_pct",
-              "Fridge_Temp_F"]
+              "Fridge_Temp_F",
+              "HeatLamp_On", "FrontCable_On", "RearCable_On", "CrawlFan_On"]
 
 with open(OUT, "w", newline="") as f:
     w = csv.DictWriter(f, fieldnames=fieldnames)
