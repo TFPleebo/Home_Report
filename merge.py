@@ -306,7 +306,11 @@ def load_combined_inbox(filename="home_sensors_inbox.csv"):
                               "RearCable_On", "CrawlFan_On", "BedHeater_On"):
                 if state_col in r:
                     v = (r.get(state_col) or "").strip()
-                    if v:
+                    # "NaN" is a deliberate placeholder the Shortcut writes for a
+                    # device that does not exist yet, purely to hold the column
+                    # position so later states do not slide left. Treat it as
+                    # missing, never as a value.
+                    if v and v.lower() not in ("nan", "null", "none", "-"):
                         d[state_col] = v
 
 load_combined_inbox()
