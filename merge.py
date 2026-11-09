@@ -63,7 +63,7 @@ def ensure(date, time24):
             # they stay blank until the Shortcut starts writing them, and every
             # historical row simply has empty values here.
             "HeatLamp_On": "", "FrontCable_On": "",
-            "RearCable_On": "", "CrawlFan_On": "",
+            "RearCable_On": "", "CrawlFan_On": "", "BedHeater_On": "",
         }
     return rows[key]
 
@@ -258,7 +258,7 @@ def load_combined_inbox(filename="home_sensors_inbox.csv"):
         # Order MUST match the order the Shortcut appends them in the CSV row.
         # These are all TRAILING columns, which is why positional recovery works.
         expected_tail = ["Fridge_Temp_F", "HeatLamp_On", "FrontCable_On",
-                         "RearCable_On", "CrawlFan_On"]
+                         "RearCable_On", "CrawlFan_On", "BedHeater_On"]
         missing_tail = [c for c in expected_tail if c not in (reader.fieldnames or [])]
         # Only WARN once we actually find surplus values to recover. Columns the
         # Shortcut has not started writing yet are absent from both the header and
@@ -303,7 +303,7 @@ def load_combined_inbox(filename="home_sensors_inbox.csv"):
             # clean_numeric, so that an empty value stays empty and is never
             # confused with a genuine "off".
             for state_col in ("HeatLamp_On", "FrontCable_On",
-                              "RearCable_On", "CrawlFan_On"):
+                              "RearCable_On", "CrawlFan_On", "BedHeater_On"):
                 if state_col in r:
                     v = (r.get(state_col) or "").strip()
                     if v:
@@ -359,7 +359,8 @@ fieldnames = ["Date", "Time", "MainThermostat_Set_F",
               "BasementSteps_Temp_F", "BasementSteps_Humidity_pct",
               "MainFloor_Temp_F", "MainFloor_Humidity_pct",
               "Fridge_Temp_F",
-              "HeatLamp_On", "FrontCable_On", "RearCable_On", "CrawlFan_On"]
+              "HeatLamp_On", "FrontCable_On", "RearCable_On", "CrawlFan_On",
+              "BedHeater_On"]
 
 with open(OUT, "w", newline="") as f:
     w = csv.DictWriter(f, fieldnames=fieldnames)
