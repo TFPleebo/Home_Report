@@ -118,20 +118,40 @@ def rows_for(day, payload):
     return out
 
 
+def sort_key(row):
+    """Newest first. Time comes back as 12-hour '%I:%M %p', so it must be
+    parsed rather than string-sorted ('10:00 PM' sorts before '9:00 AM')."""
+    try:
+        t = datetime.strptime(row[1].strip(), "%I:%M %p").strftime("%H:%M")
+    except (ValueError, IndexError):
+        t = "00:00"
+    return (row[0], t)
+
+
 def append(rows):
-    new_file = not os.path.exists(LOG) or os.path.getsize(LOG) == 0
-    needs_nl = False
-    if not new_file:
-        with open(LOG, "rb") as f:
-            f.seek(-1, os.SEEK_END)
-            needs_nl = f.read(1) != b"\n"
-    with open(LOG, "a", newline="", encoding="utf-8") as f:
-        if needs_nl:
-            f.write("\n")
+    """Insert new rows and rewrite the file NEWEST FIRST.
+
+    The log used to be opened in 'a' mode, which was cheaper but buried the
+    most recent reading 14,000 lines down - GitHub truncates the preview, so
+    the file looked stale when it was not. Rewriting costs nothing at this
+    size and the git diff stays small because new rows land at the top.
+    """
+    existing = []
+    if os.path.exists(LOG) and os.path.getsize(LOG) > 0:
+        with open(LOG, newline="", encoding="utf-8") as f:
+            r = csv.reader(f)
+            for i, row in enumerate(r):
+                if i == 0 and row and row[0] == HEADER[0]:
+                    continue                      # drop the old header
+                if row:
+                    existing.append(row)
+    seen = {(r[0], r[1]) for r in existing if len(r) > 1}
+    merged = existing + [r for r in rows if (r[0], r[1]) not in seen]
+    merged.sort(key=sort_key, reverse=True)
+    with open(LOG, "w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
-        if new_file:
-            w.writerow(HEADER)
-        w.writerows(rows)
+        w.writerow(HEADER)
+        w.writerows(merged)
 
 
 def targets(argv, have):
